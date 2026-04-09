@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Form Perjalanan Dinas</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0d0f13;
+            --panel: #11141a;
+            --panel-2: #0b0d11;
+            --line: #232833;
+            --line-soft: #1b2029;
+            --txt: #f3f4f6;
+            --muted: #9aa4b2;
+            --input-bg: #0f1319;
+            --chip: #171b23;
+            --accent: #ffffff;
+            --accent-dark: #111111;
+            --primary: #1f6feb;
+            --shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+
+            --doc-bg: #fff;
+            --doc-txt: #111;
+            --doc-line: #1c1c1c;
+            --doc-soft: #666;
+        }
+
+        html[data-theme="light"] {
+            --bg: #f3f5f8;
+            --panel: #ffffff;
+            --panel-2: #f8fafc;
+            --line: #d8dee7;
+            --line-soft: #e7ebf2;
+            --txt: #111827;
+            --muted: #5f6b7a;
+            --input-bg: #ffffff;
+            --chip: #eff3f8;
+            --accent: #111111;
+            --accent-dark: #ffffff;
+            --primary: #1f6feb;
+            --shadow: 0 18px 40px rgba(15, 23, 42, 0.09);
+        }
+
+        html,
+        body {
+            background: var(--bg);
+            color: var(--txt);
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .app-shell {
+            max-width: 1560px;
+            margin: 24px auto;
+            padding: 0 12px;
+        }
+
+        .workspace {
+            background: var(--panel);
+            border: 1px solid var(--line-soft);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--line);
+            background: #06070a;
+        }
+
+        html[data-theme="light"] .topbar {
+            background: #ffffff;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .topbar-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .topbar-sub {
+            font-size: .85rem;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .icon-btn,
+        .ghost-btn,
+        .primary-btn {
+            border-radius: 12px;
+            min-height: 40px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: .2s ease;
+        }
+
+        .icon-btn {
+            width: 40px;
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--txt);
+        }
+
+        .ghost-btn {
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--txt);
+            padding: 0 14px;
+        }
+
+        .ghost-btn:hover,
+        .icon-btn:hover {
+            background: var(--chip);
+        }
+
+        .primary-btn {
+            border: 0;
+            background: #fff;
+            color: #111;
+            padding: 0 16px;
+        }
+
+        html[data-theme="light"] .primary-btn {
+            background: #111;
+            color: #fff;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 250px minmax(0, 1fr) minmax(420px, 560px);
+            min-height: calc(100vh - 120px);
+        }
+
+        body.preview-hidden .main-grid {
+            grid-template-columns: 250px minmax(0, 1fr);
+        }
+
+        .sidebar {
+            background: #07090c;
+            border-right: 1px solid var(--line);
+            padding: 18px 14px;
+        }
+
+        html[data-theme="light"] .sidebar {
+            background: #fbfcfe;
+        }
+
+        .step-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .step-btn {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--line-soft);
+            background: transparent;
+            color: var(--txt);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .step-btn.active {
+            background: var(--chip);
+            border-color: var(--line);
+        }
+
+        .step-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .step-no {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1px solid var(--line);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .78rem;
+            flex: 0 0 auto;
+        }
+
+        .step-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: .95rem;
+        }
+
+        .step-check {
+            color: #22c55e;
+        }
+
+        .step-note {
+            color: var(--muted);
+            font-size: .88rem;
+            margin-top: 14px;
+            line-height: 1.55;
+        }
+
+        .form-panel,
+        .preview-panel {
+            padding: 22px 22px 24px;
+        }
+
+        .form-panel {
+            border-right: 1px solid var(--line);
+        }
+
+        .preview-panel {
+            display: block;
+        }
+
+        body.preview-hidden .preview-panel {
+            display: none;
+        }
+
+        .form-header {
+            margin-bottom: 20px;
+        }
+
+        .form-title {
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+
+        .form-desc {
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .doc-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .doc-tabs .nav-link {
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--txt);
+            font-weight: 700;
+            padding: 10px 16px;
+        }
+
+        .doc-tabs .nav-link.active {
+            background: var(--txt);
+            color: var(--bg);
+            border-color: transparent;
+        }
+
+        .section-card {
+            border: 1px solid var(--line-soft);
+            background: transparent;
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 18px;
+        }
+
+        .section-card-title {
+            font-size: 1.02rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .section-card-desc {
+            color: var(--muted);
+            font-size: .92rem;
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: .9rem;
+            font-weight: 700;
+            margin-bottom: 7px;
+        }
+
+        .form-control,
+        .form-select,
+        .form-control:focus,
+        .form-select:focus,
+        textarea.form-control {
+            background: var(--input-bg);
+            color: var(--txt);
+            border-color: var(--line);
+            border-radius: 12px;
+            box-shadow: none;
+        }
+
+        .form-control,
+        .form-select {
+            min-height: 46px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 .2rem rgba(31, 111, 235, .14);
+        }
+
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .editor-toolbar-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .mini-btn {
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--txt);
+            border-radius: 10px;
+            min-height: 38px;
+            padding: 0 12px;
+            font-weight: 600;
+        }
+
+        .mini-btn:hover {
+            background: var(--chip);
+        }
+
+        .cost-editor-wrap {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .cost-editor-table {
+            width: 100%;
+            min-width: 760px;
+            border-collapse: collapse;
+        }
+
+        .cost-editor-table th,
+        .cost-editor-table td {
+            border-bottom: 1px solid var(--line-soft);
+            padding: 10px;
+            vertical-align: top;
+            background: transparent;
+        }
+
+        .cost-editor-table th {
+            font-size: .86rem;
+            font-weight: 800;
+            color: var(--muted);
+            background: rgba(255, 255, 255, .01);
+        }
+
+        .cost-editor-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        .row-type-badge {
+            min-width: 104px;
+        }
+
+        .signature-uploader {
+            border: 1px dashed var(--line);
+            border-radius: 14px;
+            padding: 12px;
+            background: transparent;
+        }
+
+        .signature-preview-mini {
+            width: 100%;
+            max-width: 180px;
+            height: 68px;
+            object-fit: contain;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid var(--line-soft);
+            padding: 6px;
+            display: block;
+        }
+
+        .preview-head h4 {
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .preview-head p {
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        .preview-scroll {
+            overflow: auto;
+            border-radius: 14px;
+        }
+
+        .doc-page {
+            width: 794px;
+            min-height: 1123px;
+            background: var(--doc-bg);
+            color: var(--doc-txt);
+            margin: 0 auto;
+            padding: 26px 34px 28px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, .18);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            line-height: 1.28;
+        }
+
+        .doc-top {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: start;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .doc-company {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: .2px;
+        }
+
+        .doc-date {
+            font-size: 14px;
+            margin-top: 18px;
+        }
+
+        .doc-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: .3px;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+        }
+
+        .doc-info {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        .doc-info td {
+            padding: 1px 0;
+            vertical-align: top;
+            font-size: 13px;
+        }
+
+        .doc-info .label {
+            width: 195px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .doc-info .colon {
+            width: 16px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .doc-amount-head {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0 0;
+        }
+
+        .doc-amount-head td {
+            padding: 1px 0 2px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .doc-cost {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 14px;
+            font-size: 13px;
+        }
+
+        .doc-cost td,
+        .doc-cost th {
+            border: 1px solid var(--doc-line);
+            padding: 3px 5px;
+            vertical-align: top;
+        }
+
+        .doc-cost .no-col {
+            width: 34px;
+            text-align: center;
+        }
+
+        .doc-cost .desc-col {
+            width: auto;
+        }
+
+        .doc-cost .rp-col,
+        .doc-cost .usd-col {
+            width: 132px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .doc-cost .center {
+            text-align: center;
+        }
+
+        .doc-cost .total-label {
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .doc-cost .total-value {
+            font-weight: 700;
+        }
+
+        .doc-note-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .doc-note-lines {
+            font-size: 13px;
+            line-height: 1.35;
+            margin-bottom: 18px;
+            white-space: pre-line;
+        }
+
+        .doc-summary {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            margin: 8px 0 18px;
+            font-size: 13px;
+        }
+
+        .doc-summary.active {
+            display: grid;
+        }
+
+        .summary-col .summary-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 14px;
+            align-items: end;
+            margin-bottom: 6px;
+        }
+
+        .summary-value {
+            min-width: 110px;
+            border-bottom: 1px solid #111;
+            text-align: center;
+            font-weight: 700;
+            padding-bottom: 2px;
+        }
+
+        .doc-signatures {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 36px;
+            margin-top: 34px;
+            text-align: center;
+        }
+
+        .doc-sign-role {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+
+        .doc-sign-image-wrap {
+            height: 62px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        .doc-sign-image {
+            max-width: 150px;
+            max-height: 54px;
+            object-fit: contain;
+            display: none;
+        }
+
+        .doc-sign-image.has-image {
+            display: block;
+        }
+
+        .doc-sign-name {
+            display: inline-block;
+            min-width: 160px;
+            padding-top: 6px;
+            border-top: 1px solid #111;
+            font-size: 13px;
+        }
+
+        .text-muted-small {
+            color: var(--muted);
+            font-size: .85rem;
+        }
+
+        @media (max-width: 1399.98px) {
+            .main-grid {
+                grid-template-columns: 220px minmax(0, 1fr) minmax(360px, 500px);
+            }
+
+            body.preview-hidden .main-grid {
+                grid-template-columns: 220px minmax(0, 1fr);
+            }
+        }
+
+        @media (max-width: 1199.98px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            body.preview-hidden .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar,
+            .form-panel {
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .step-list {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .app-shell {
+                margin: 12px auto;
+                padding: 0 8px;
+            }
+
+            .topbar {
+                padding: 10px 12px;
+            }
+
+            .topbar-sub {
+                display: none;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .topbar-left,
+            .topbar-right {
+                width: 100%;
+            }
+
+            .topbar-right {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .sidebar,
+            .form-panel,
+            .preview-panel {
+                padding: 16px 14px;
+            }
+
+            .step-list {
+                grid-template-columns: 1fr;
+            }
+
+            .form-title {
+                font-size: 1.4rem;
+            }
+
+            .doc-page {
+                width: 794px;
+                min-width: 794px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+        <div class="workspace">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="icon-btn" type="button" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <div>
+                        <h1 class="topbar-title">Form Perjalanan Dinas</h1>
+                        <p class="topbar-sub">UI panel modern + preview dokumen 1:1 + export PDF</p>
+                    </div>
+                </div>
+
+                <div class="topbar-right d-flex align-items-center gap-2 flex-wrap">
+                    <button id="togglePreviewBtn" class="ghost-btn" type="button">
+                        <i class="bi bi-layout-sidebar-inset-reverse"></i>
+                        <span>Hide Preview</span>
+                    </button>
+
+                    <button id="themeToggleBtn" class="ghost-btn" type="button">
+                        <i class="bi bi-moon-stars-fill"></i>
+                        <span>Dark mode</span>
+                    </button>
+
+                    <button id="saveDraftBtn" class="ghost-btn" type="button">
+                        <i class="bi bi-floppy"></i>
+                        <span>Simpan draft</span>
+                    </button>
+
+                    <button id="resetBtn" class="ghost-btn" type="button">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>Reset</span>
+                    </button>
+
+                    <button id="downloadPdfBtn" class="primary-btn" type="button">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        <span>Download PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <!-- SIDEBAR -->
+                <aside class="sidebar">
+                    <div class="step-list">
+                        <button class="step-btn active" type="button" data-step-target="tab-ump">
+                            <div class="step-left">
+                                <span class="step-no">1</span>
+                                <span class="step-label">Uang Muka Perjalanan</span>
+                            </div>
+                            <i class="bi bi-check-circle-fill step-check"></i>
+                        </button>
+
+                        <button class="step-btn" type="button" data-step-target="tab-realisasi">
+                            <div class="step-left">
+                                <span class="step-no">2</span>
+                                <span class="step-label">Realisasi Biaya Perjalanan</span>
+                            </div>
+                            <i class="bi bi-check-circle-fill step-check"></i>
+                        </button>
+                    </div>
+
+                    <div class="step-note">
+                        Preview mengikuti dokumen cetak. Untuk layar kecil, preview bisa di-hide lalu ditampilkan lagi
+                        saat ingin mengecek hasil.
+                    </div>
+                </aside>
+
+                <!-- FORM PANEL -->
+                <section class="form-panel">
+                    <div class="doc-tabs nav" id="docTabs" role="tablist">
+                        <button class="nav-link active" id="tab-ump" data-bs-toggle="pill" data-bs-target="#pane-ump"
+                            type="button" role="tab">
+                            Uang Muka Perjalanan
+                        </button>
+                        <button class="nav-link" id="tab-realisasi" data-bs-toggle="pill"
+                            data-bs-target="#pane-realisasi" type="button" role="tab">
+                            Realisasi Biaya Perjalanan
+                        </button>
+                    </div>
+
+                    <div class="form-header">
+                        <div class="form-title">Form Editor</div>
+                        <p class="form-desc">Isi data di kiri, lalu cek preview dokumen di kanan.</p>
+                    </div>
+
+                    <div class="tab-content">
+                        <!-- TAB 1 -->
+                        <div class="tab-pane fade show active" id="pane-ump" role="tabpanel">
+                            <div class="section-card">
+                                <div class="section-card-title">Informasi Dokumen</div>
+                                <div class="section-card-desc">Bagian header dan identitas perjalanan.</div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Perusahaan</label>
+                                        <input type="text" class="form-control sync-field" data-key="companyName">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tanggal Dokumen</label>
+                                        <input type="date" class="form-control sync-field" data-key="docDate">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Departemen</label>
+                                        <input type="text" class="form-control sync-field" data-key="department">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tujuan</label>
+                                        <input type="text" class="form-control sync-field" data-key="destination">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Keperluan</label>
+                                        <input type="text" class="form-control sync-field" data-key="purpose">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">No. PO</label>
+                                        <input type="text" class="form-control sync-field" data-key="poNumber">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Lama Project</label>
+                                        <input type="text" class="form-control sync-field" data-key="projectDuration">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Pengajuan</label>
+                                        <input type="text" class="form-control sync-field" data-key="submissionPeriod">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Nama Installer Cabling</label>
+                                        <input type="text" class="form-control sync-field" data-key="installerName">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Nama Sales</label>
+                                        <input type="text" class="form-control sync-field" data-key="salesName">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section-card">
+                                <div class="section-card-title">Biaya Perjalanan</div>
+                                <div class="section-card-desc">Baris biaya sekarang dinamis. Bisa tambah baris utama
+                                    atau sub-baris.</div>
+
+                                <div class="editor-toolbar">
+                                    <div class="text-muted-small">
+                                        Tipe <strong>Item</strong> akan bernomor otomatis. Tipe
+                                        <strong>Sub-item</strong> tampil tanpa nomor seperti bagian “LAIN-LAIN”.
+                                    </div>
+
+                                    <div class="editor-toolbar-actions">
+                                        <button id="addItemRowBtn" class="mini-btn" type="button">
+                                            <i class="bi bi-plus-lg"></i> Tambah item
+                                        </button>
+                                        <button id="addSubRowBtn" class="mini-btn" type="button">
+                                            <i class="bi bi-plus-lg"></i> Tambah sub-item
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="cost-editor-wrap">
+                                    <div class="table-scroll">
+                                        <table class="cost-editor-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:130px;">Tipe</th>
+                                                    <th>Deskripsi</th>
+                                                    <th style="width:150px;">Rp</th>
+                                                    <th style="width:120px;">USD</th>
+                                                    <th style="width:88px;" class="text-center">Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="costEditorBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section-card">
+                                <div class="section-card-title">Catatan</div>
+                                <div class="section-card-desc">Isi note seperti yang akan dicetak di bawah tabel.</div>
+
+                                <label class="form-label">Note</label>
+                                <textarea rows="4" class="form-control sync-field" data-key="noteText"></textarea>
+                            </div>
+
+                            <div class="section-card">
+                                <div class="section-card-title">Tanda Tangan</div>
+                                <div class="section-card-desc">Upload PNG/JPG tanda tangan. Akan tampil di preview dan
+                                    PDF.</div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Prepared By</label>
+                                        <input type="text" class="form-control sync-field mb-2" data-key="preparedBy">
+                                        <div class="signature-uploader">
+                                            <input type="file" class="form-control mb-2 signature-input"
+                                                data-sign-key="preparedSign" accept="image/*">
+                                            <img id="preparedSignMini" class="signature-preview-mini mb-2"
+                                                alt="Prepared signature preview">
+                                            <button class="mini-btn w-100 clear-sign-btn" data-sign-key="preparedSign"
+                                                type="button">Hapus tanda tangan</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Checked By</label>
+                                        <input type="text" class="form-control sync-field mb-2" data-key="checkedBy">
+                                        <div class="signature-uploader">
+                                            <input type="file" class="form-control mb-2 signature-input"
+                                                data-sign-key="checkedSign" accept="image/*">
+                                            <img id="checkedSignMini" class="signature-preview-mini mb-2"
+                                                alt="Checked signature preview">
+                                            <button class="mini-btn w-100 clear-sign-btn" data-sign-key="checkedSign"
+                                                type="button">Hapus tanda tangan</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Approved By</label>
+                                        <input type="text" class="form-control sync-field mb-2" data-key="approvedBy">
+                                        <div class="signature-uploader">
+                                            <input type="file" class="form-control mb-2 signature-input"
+                                                data-sign-key="approvedSign" accept="image/*">
+                                            <img id="approvedSignMini" class="signature-preview-mini mb-2"
+                                                alt="Approved signature preview">
+                                            <button class="mini-btn w-100 clear-sign-btn" data-sign-key="approvedSign"
+                                                type="button">Hapus tanda tangan</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2 -->
+                        <div class="tab-pane fade" id="pane-realisasi" role="tabpanel">
+                            <div class="section-card">
+                                <div class="section-card-title">Summary Realisasi</div>
+                                <div class="section-card-desc">Bagian ini hanya muncul saat tab Realisasi aktif.</div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Receipt / Penerimaan Rp</label>
+                                        <input type="number" class="form-control sync-field" data-key="receiptRp">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Receipt USD</label>
+                                        <input type="number" class="form-control sync-field" data-key="receiptUsd">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Total Expense Rp</label>
+                                        <input type="number" class="form-control sync-field" data-key="totalExpenseRp">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Total Expense USD</label>
+                                        <input type="number" class="form-control sync-field" data-key="totalExpenseUsd">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Selisih Rp</label>
+                                        <input type="number" class="form-control" id="differenceRpInput" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Selisih USD</label>
+                                        <input type="number" class="form-control" id="differenceUsdInput" readonly>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="form-check mt-1">
+                                            <input class="form-check-input sync-checkbox" type="checkbox"
+                                                id="showRealisasiSummary" data-key="showRealisasiSummary">
+                                            <label class="form-check-label" for="showRealisasiSummary">
+                                                Tampilkan blok summary realisasi di preview
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section-card">
+                                <div class="section-card-title">Catatan</div>
+                                <div class="section-card-desc">Biaya tetap memakai data yang sama dari editor biaya di
+                                    tab pertama.</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PREVIEW PANEL -->
+                <aside class="preview-panel">
+                    <div class="preview-head">
+                        <h4>Preview</h4>
+                        <p>Proporsi dokumen dibuat lebih dekat ke format cetak.</p>
+                    </div>
+
+                    <div class="preview-scroll">
+                        <div id="previewDocument" class="doc-page">
+                            <div class="doc-top">
+                                <div class="doc-company" id="pvCompanyName">PT. PERKOM INDAH MURNI</div>
+                                <div class="doc-date" id="pvDate">Tanggal 01 November 2025</div>
+                            </div>
+
+                            <div class="doc-title" id="pvTitle">UANG MUKA PERJALANAN</div>
+
+                            <table class="doc-info">
+                                <tr>
+                                    <td class="label">DEPARTEMEN</td>
+                                    <td class="colon">:</td>
+                                    <td id="pvDepartment"></td>
+                                </tr>
+                                <tr>
+                                    <td class="label">TUJUAN</td>
+                                    <td class="colon">:</td>
+                                    <td id="pvDestination"></td>
+                                </tr>
+                                <tr>
+                                    <td class="label">KEPERLUAN</td>
+                                    <td class="colon">:</td>
+                                    <td id="pvPurpose"></td>
+                                </tr>
+                                <tr>
+                                    <td class="label">NO. PO</td>
+                                    <td class="colon">:</td>
+                                    <td id="pvPoNumber"></td>
+                                </tr>
+                                <tr>
+                                    <td class="label">LAMA PROJECT</td>
+                                    <td class="colon">:</td>
+                                    <td id="pvProjectDuration"></td>
+                                </tr>
+                                <tr>
+                                    <td class="label">PENGAJUAN</td>
+                                    <td class="colon">:</td>
+                                    <td id="pvSubmissionPeriod"></td>
+                                </tr>
+                                <tr>
+                                    <td class="label">NAMA INSTALLER CABLING</td>
+                                    <td class="colon">:</td>
+                                    <td id="pvInstallerName"></td>
+                                </tr>
+                                <tr>
+                                    <td class="label">NAMA SALES</td>
+                                    <td class="colon">:</td>
+                                    <td id="pvSalesName"></td>
+                                </tr>
+                            </table>
+
+                            <table class="doc-amount-head">
+                                <tr>
+                                    <td style="width:34px;"></td>
+                                    <td></td>
+                                    <td style="width:132px;">AMOUNT<br>Rp.</td>
+                                    <td style="width:132px;">AMOUNT<br>USD</td>
+                                </tr>
+                            </table>
+
+                            <table class="doc-cost">
+                                <tbody id="previewCostBody"></tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="2" class="total-label">TOTAL</td>
+                                        <td class="rp-col total-value" id="pvGrandTotal">0</td>
+                                        <td class="usd-col"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <div class="doc-note-title">NOTE :</div>
+                            <div class="doc-note-lines" id="pvNote"></div>
+
+                            <div id="pvSummaryBlock" class="doc-summary">
+                                <div class="summary-col">
+                                    <div class="summary-row">
+                                        <span>RECEIPT / (DATE :</span>
+                                        <span class="summary-value" id="pvReceiptRp"></span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>TOTAL EXPENSE</span>
+                                        <span class="summary-value" id="pvTotalExpenseRp"></span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>(-)</span>
+                                        <span class="summary-value" id="pvDifferenceRp"></span>
+                                    </div>
+                                </div>
+
+                                <div class="summary-col">
+                                    <div class="summary-row">
+                                        <span>US$</span>
+                                        <span class="summary-value" id="pvReceiptUsd"></span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>(US$ ________ )</span>
+                                        <span class="summary-value" id="pvTotalExpenseUsd"></span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>US$</span>
+                                        <span class="summary-value" id="pvDifferenceUsd"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="doc-signatures">
+                                <div>
+                                    <div class="doc-sign-role">PREPARED BY :</div>
+                                    <div class="doc-sign-image-wrap">
+                                        <img id="pvPreparedSign" class="doc-sign-image" alt="Prepared Signature">
+                                    </div>
+                                    <div class="doc-sign-name" id="pvPreparedBy">( )</div>
+                                </div>
+
+                                <div>
+                                    <div class="doc-sign-role">CHECKED BY :</div>
+                                    <div class="doc-sign-image-wrap">
+                                        <img id="pvCheckedSign" class="doc-sign-image" alt="Checked Signature">
+                                    </div>
+                                    <div class="doc-sign-name" id="pvCheckedBy">( )</div>
+                                </div>
+
+                                <div>
+                                    <div class="doc-sign-role">APPROVED BY :</div>
+                                    <div class="doc-sign-image-wrap">
+                                        <img id="pvApprovedSign" class="doc-sign-image" alt="Approved Signature">
+                                    </div>
+                                    <div class="doc-sign-name" id="pvApprovedBy">( )</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const STORAGE_KEY = "travel_form_bootstrap_v2";
+        const THEME_KEY = "travel_form_bootstrap_theme_v2";
+
+        const defaultState = {
+            companyName: "PT. PERKOM INDAH MURNI",
+            docDate: "2025-11-01",
+            department: "Sistem Integrasi System",
+            destination: "PT. Karang Mas Sejahtera ( rimba & Ayana )",
+            purpose: "Instalasi Data,CCTV & Access Point",
+            poNumber: "",
+            projectDuration: "",
+            submissionPeriod: "1 Bulan (30 Hari ) 01 November - 30 November 2025",
+            installerName: "Muhammad Muhlis , Kamdani",
+            salesName: "Nadya Rizki",
+
+            noteText:
+                `- SEMUA BUKTI PENGELUARAN HARUS DILAMPIRKAN PADA FORMULIR INI
+- FORMULIR INI HARUS DISERAHKAN KE BAGIAN ACCOUNTING PALING LAMBAT 7 (TUJUH) HARI
+  SETELAH SELESAI PERJALANAN.`,
+
+            preparedBy: "M. Muhlis",
+            checkedBy: "Darwin Ch",
+            approvedBy: "Christian Hadi Susanto",
+
+            preparedSign: "",
+            checkedSign: "",
+            approvedSign: "",
+
+            receiptRp: 14117000,
+            receiptUsd: 0,
+            totalExpenseRp: 14117000,
+            totalExpenseUsd: 0,
+            showRealisasiSummary: true,
+
+            costs: [
+                { type: "item", description: "TIKET PESAWAT UDARA / K.A / BIS", rp: 0, usd: "" },
+                { type: "item", description: "Penginapan ( Rp.1.200.000 x 1 bulan x 2 kamar )", rp: 2400000, usd: "" },
+                { type: "item", description: "Transport Lokal / Rentall Motor 3 Unit", rp: 3000000, usd: "" },
+                { type: "item", description: "uang makan dari ( Rp. 120.000 x 2 orang x 30 hari )", rp: 7200000, usd: "" },
+                { type: "item", description: "", rp: 0, usd: "" },
+                { type: "item", description: "Bensin 3 motor", rp: 600000, usd: "" },
+                { type: "item", description: "Pulsa HP (Rp.102.000 x 2 Orang)", rp: 204000, usd: "" },
+                { type: "item", description: "LAIN-LAIN", rp: "", usd: "" },
+                { type: "sub", description: "- Listrik 1 bulan 2 kamar", rp: 510000, usd: "" },
+                { type: "sub", description: "- Air Galon", rp: 168000, usd: "" },
+                { type: "sub", description: "- Pengiriman dokumen", rp: 35000, usd: "" }
+            ]
+        };
+
+        let state = structuredClone(defaultState);
+
+        function clone(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
+
+        function formatDateIndo(dateString) {
+            if (!dateString) return "";
+            const d = new Date(dateString + "T00:00:00");
+            if (Number.isNaN(d.getTime())) return dateString;
+            const months = [
+                "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+            ];
+            return `${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        function formatNumber(value) {
+            if (value === "" || value === null || value === undefined) return "";
+            const num = Number(value);
+            if (Number.isNaN(num)) return "";
+            return new Intl.NumberFormat("id-ID").format(num);
+        }
+
+        function parseMaybeNumber(value) {
+            if (value === "" || value === null || value === undefined) return "";
+            const num = Number(value);
+            return Number.isNaN(num) ? "" : num;
+        }
+
+        function calcGrandTotal() {
+            return state.costs.reduce((sum, row) => {
+                const val = row.rp === "" ? 0 : Number(row.rp || 0);
+                return sum + (Number.isNaN(val) ? 0 : val);
+            }, 0);
+        }
+
+        function calcDifferenceRp() {
+            return Number(state.receiptRp || 0) - Number(state.totalExpenseRp || 0);
+        }
+
+        function calcDifferenceUsd() {
+            return Number(state.receiptUsd || 0) - Number(state.totalExpenseUsd || 0);
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function loadState() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) {
+                state = clone(defaultState);
+                return;
+            }
+            try {
+                const parsed = JSON.parse(raw);
+                state = { ...clone(defaultState), ...parsed };
+                if (!Array.isArray(state.costs)) {
+                    state.costs = clone(defaultState.costs);
+                }
+            } catch {
+                state = clone(defaultState);
+            }
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+            localStorage.setItem(THEME_KEY, theme);
+            const btn = document.getElementById("themeToggleBtn");
+            if (!btn) return;
+            btn.innerHTML = theme === "dark"
+                ? `<i class="bi bi-moon-stars-fill"></i><span>Dark mode</span>`
+                : `<i class="bi bi-sun-fill"></i><span>Light mode</span>`;
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem(THEME_KEY) || "dark";
+            applyTheme(savedTheme);
+        }
+
+        function fillStaticFields() {
+            document.querySelectorAll(".sync-field").forEach(el => {
+                const key = el.dataset.key;
+                if (!key) return;
+                el.value = state[key] ?? "";
+            });
+
+            document.querySelectorAll(".sync-checkbox").forEach(el => {
+                const key = el.dataset.key;
+                if (!key) return;
+                el.checked = Boolean(state[key]);
+            });
+
+            document.getElementById("differenceRpInput").value = calcDifferenceRp();
+            document.getElementById("differenceUsdInput").value = calcDifferenceUsd();
+
+            updateMiniSignaturePreview("preparedSign", state.preparedSign);
+            updateMiniSignaturePreview("checkedSign", state.checkedSign);
+            updateMiniSignaturePreview("approvedSign", state.approvedSign);
+        }
+
+        function bindStaticFields() {
+            document.querySelectorAll(".sync-field").forEach(el => {
+                el.addEventListener("input", () => {
+                    state[el.dataset.key] = el.value;
+                    if (["receiptRp", "receiptUsd", "totalExpenseRp", "totalExpenseUsd"].includes(el.dataset.key)) {
+                        state[el.dataset.key] = parseMaybeNumber(el.value);
+                        document.getElementById("differenceRpInput").value = calcDifferenceRp();
+                        document.getElementById("differenceUsdInput").value = calcDifferenceUsd();
+                    }
+                    renderPreview();
+                });
+            });
+
+            document.querySelectorAll(".sync-checkbox").forEach(el => {
+                el.addEventListener("change", () => {
+                    state[el.dataset.key] = el.checked;
+                    renderPreview();
+                });
+            });
+        }
+
+        function renderCostEditor() {
+            const tbody = document.getElementById("costEditorBody");
+            tbody.innerHTML = "";
+
+            state.costs.forEach((row, index) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+          <td>
+            <select class="form-select row-type-badge" data-row-index="${index}" data-row-field="type">
+              <option value="item" ${row.type === "item" ? "selected" : ""}>Item</option>
+              <option value="sub" ${row.type === "sub" ? "selected" : ""}>Sub-item</option>
+            </select>
+          </td>
+          <td>
+            <input type="text" class="form-control" data-row-index="${index}" data-row-field="description" value="${escapeAttr(row.description)}" placeholder="Deskripsi biaya">
+          </td>
+          <td>
+            <input type="number" class="form-control" data-row-index="${index}" data-row-field="rp" value="${row.rp === "" ? "" : row.rp}" placeholder="0">
+          </td>
+          <td>
+            <input type="text" class="form-control" data-row-index="${index}" data-row-field="usd" value="${escapeAttr(row.usd ?? "")}" placeholder="">
+          </td>
+          <td class="text-center">
+            <button class="mini-btn delete-row-btn" type="button" data-row-index="${index}">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </td>
+        `;
+                tbody.appendChild(tr);
+            });
+
+            bindCostEditorEvents();
+        }
+
+        function bindCostEditorEvents() {
+            document.querySelectorAll("[data-row-field]").forEach(el => {
+                el.addEventListener("input", () => {
+                    const idx = Number(el.dataset.rowIndex);
+                    const field = el.dataset.rowField;
+                    if (field === "rp") {
+                        state.costs[idx][field] = parseMaybeNumber(el.value);
+                    } else {
+                        state.costs[idx][field] = el.value;
+                    }
+                    renderPreview();
+                });
+
+                el.addEventListener("change", () => {
+                    const idx = Number(el.dataset.rowIndex);
+                    const field = el.dataset.rowField;
+                    if (field === "rp") {
+                        state.costs[idx][field] = parseMaybeNumber(el.value);
+                    } else {
+                        state.costs[idx][field] = el.value;
+                    }
+                    renderPreview();
+                });
+            });
+
+            document.querySelectorAll(".delete-row-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const idx = Number(btn.dataset.rowIndex);
+                    state.costs.splice(idx, 1);
+                    renderCostEditor();
+                    renderPreview();
+                });
+            });
+        }
+
+        function addRow(type) {
+            state.costs.push({
+                type,
+                description: type === "sub" ? "- " : "",
+                rp: "",
+                usd: ""
+            });
+            renderCostEditor();
+            renderPreview();
+        }
+
+        function updateMiniSignaturePreview(key, value) {
+            const map = {
+                preparedSign: "preparedSignMini",
+                checkedSign: "checkedSignMini",
+                approvedSign: "approvedSignMini"
+            };
+            const img = document.getElementById(map[key]);
+            if (!img) return;
+            if (value) {
+                img.src = value;
+                img.style.display = "block";
+            } else {
+                img.removeAttribute("src");
+                img.style.display = "none";
+            }
+        }
+
+        function bindSignatureInputs() {
+            document.querySelectorAll(".signature-input").forEach(input => {
+                input.addEventListener("change", async (e) => {
+                    const file = e.target.files?.[0];
+                    const key = e.target.dataset.signKey;
+                    if (!file || !key) return;
+
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        state[key] = reader.result;
+                        updateMiniSignaturePreview(key, state[key]);
+                        renderPreview();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            document.querySelectorAll(".clear-sign-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const key = btn.dataset.signKey;
+                    state[key] = "";
+                    updateMiniSignaturePreview(key, "");
+                    const input = document.querySelector(`.signature-input[data-sign-key="${key}"]`);
+                    if (input) input.value = "";
+                    renderPreview();
+                });
+            });
+        }
+
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value ?? "";
+        }
+
+        function setSignImage(id, value) {
+            const img = document.getElementById(id);
+            if (!img) return;
+            if (value) {
+                img.src = value;
+                img.classList.add("has-image");
+            } else {
+                img.removeAttribute("src");
+                img.classList.remove("has-image");
+            }
+        }
+
+        function getActiveDocType() {
+            const activeTab = document.querySelector("#docTabs .nav-link.active");
+            return activeTab?.id === "tab-realisasi" ? "realisasi" : "ump";
+        }
+
+        function renderPreviewCosts() {
+            const tbody = document.getElementById("previewCostBody");
+            tbody.innerHTML = "";
+            let itemNo = 0;
+
+            state.costs.forEach(row => {
+                const tr = document.createElement("tr");
+                const isItem = row.type === "item";
+                if (isItem) itemNo += 1;
+
+                tr.innerHTML = `
+          <td class="no-col">${isItem ? itemNo : ""}</td>
+          <td class="desc-col">${escapeHtml(row.description || "")}</td>
+          <td class="rp-col">${row.rp === "" ? "" : formatNumber(row.rp)}</td>
+          <td class="usd-col">${escapeHtml(row.usd || "")}</td>
+        `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderPreview() {
+            const docType = getActiveDocType();
+
+            setText("pvCompanyName", state.companyName);
+            setText("pvDate", "Tanggal " + formatDateIndo(state.docDate));
+            setText("pvTitle", docType === "realisasi" ? "BIAYA PERJALANAN" : "UANG MUKA PERJALANAN");
+
+            setText("pvDepartment", state.department);
+            setText("pvDestination", state.destination);
+            setText("pvPurpose", state.purpose);
+            setText("pvPoNumber", state.poNumber);
+            setText("pvProjectDuration", state.projectDuration);
+            setText("pvSubmissionPeriod", state.submissionPeriod);
+            setText("pvInstallerName", state.installerName);
+            setText("pvSalesName", state.salesName);
+
+            renderPreviewCosts();
+            setText("pvGrandTotal", formatNumber(calcGrandTotal()));
+            setText("pvNote", state.noteText);
+
+            setText("pvPreparedBy", `( ${state.preparedBy || ""} )`);
+            setText("pvCheckedBy", `( ${state.checkedBy || ""} )`);
+            setText("pvApprovedBy", `( ${state.approvedBy || ""} )`);
+
+            setSignImage("pvPreparedSign", state.preparedSign);
+            setSignImage("pvCheckedSign", state.checkedSign);
+            setSignImage("pvApprovedSign", state.approvedSign);
+
+            setText("pvReceiptRp", formatNumber(state.receiptRp));
+            setText("pvReceiptUsd", formatNumber(state.receiptUsd));
+            setText("pvTotalExpenseRp", formatNumber(state.totalExpenseRp));
+            setText("pvTotalExpenseUsd", formatNumber(state.totalExpenseUsd));
+            setText("pvDifferenceRp", formatNumber(calcDifferenceRp()));
+            setText("pvDifferenceUsd", formatNumber(calcDifferenceUsd()));
+
+            const summary = document.getElementById("pvSummaryBlock");
+            summary.classList.toggle("active", docType === "realisasi" && !!state.showRealisasiSummary);
+
+            document.getElementById("differenceRpInput").value = calcDifferenceRp();
+            document.getElementById("differenceUsdInput").value = calcDifferenceUsd();
+
+            syncStepState();
+        }
+
+        function syncStepState() {
+            const active = getActiveDocType() === "realisasi" ? "tab-realisasi" : "tab-ump";
+            document.querySelectorAll(".step-btn").forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.stepTarget === active);
+            });
+        }
+
+        function bindTabsAndSteps() {
+            document.querySelectorAll("#docTabs .nav-link").forEach(tab => {
+                tab.addEventListener("shown.bs.tab", () => {
+                    renderPreview();
+                });
+            });
+
+            document.querySelectorAll(".step-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const target = document.getElementById(btn.dataset.stepTarget);
+                    if (target) bootstrap.Tab.getOrCreateInstance(target).show();
+                });
+            });
+        }
+
+        function bindTopActions() {
+            document.getElementById("addItemRowBtn").addEventListener("click", () => addRow("item"));
+            document.getElementById("addSubRowBtn").addEventListener("click", () => addRow("sub"));
+
+            document.getElementById("saveDraftBtn").addEventListener("click", () => {
+                saveState();
+                alert("Draft berhasil disimpan ke local storage browser.");
+            });
+
+            document.getElementById("resetBtn").addEventListener("click", () => {
+                const ok = confirm("Reset semua data ke default?");
+                if (!ok) return;
+                state = clone(defaultState);
+                localStorage.removeItem(STORAGE_KEY);
+                fillStaticFields();
+                renderCostEditor();
+                renderPreview();
+            });
+
+            document.getElementById("themeToggleBtn").addEventListener("click", () => {
+                const current = document.documentElement.getAttribute("data-theme") || "dark";
+                applyTheme(current === "dark" ? "light" : "dark");
+            });
+
+            document.getElementById("togglePreviewBtn").addEventListener("click", () => {
+                document.body.classList.toggle("preview-hidden");
+                const hidden = document.body.classList.contains("preview-hidden");
+                document.getElementById("togglePreviewBtn").innerHTML = hidden
+                    ? `<i class="bi bi-layout-sidebar"></i><span>Show Preview</span>`
+                    : `<i class="bi bi-layout-sidebar-inset-reverse"></i><span>Hide Preview</span>`;
+            });
+
+            document.getElementById("downloadPdfBtn").addEventListener("click", downloadPdf);
+        }
+
+        async function createPdfCanvas() {
+            const source = document.getElementById("previewDocument");
+            const clone = source.cloneNode(true);
+
+            const holder = document.createElement("div");
+            holder.style.position = "fixed";
+            holder.style.left = "-99999px";
+            holder.style.top = "0";
+            holder.style.width = "794px";
+            holder.style.background = "#fff";
+            holder.style.zIndex = "-1";
+            holder.appendChild(clone);
+            document.body.appendChild(holder);
+
+            const canvas = await html2canvas(clone, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#ffffff"
+            });
+
+            document.body.removeChild(holder);
+            return canvas;
+        }
+
+        async function downloadPdf() {
+            const { jsPDF } = window.jspdf;
+            const canvas = await createPdfCanvas();
+            const imgData = canvas.toDataURL("image/png");
+
+            const pdf = new jsPDF("p", "mm", "a4");
+            const pageWidth = 210;
+            const pageHeight = 297;
+
+            const imgWidth = pageWidth;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            const fileName = getActiveDocType() === "realisasi"
+                ? "realisasi-biaya-perjalanan.pdf"
+                : "uang-muka-perjalanan.pdf";
+
+            pdf.save(fileName);
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function escapeAttr(str) {
+            return String(str ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/"/g, "&quot;");
+        }
+
+        function init() {
+            initTheme();
+            loadState();
+            fillStaticFields();
+            bindStaticFields();
+            renderCostEditor();
+            bindSignatureInputs();
+            bindTabsAndSteps();
+            bindTopActions();
+            renderPreview();
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+</body>
+
+</html>
