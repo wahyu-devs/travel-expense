@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Form Perjalanan Dinas</title>
+    <title>Travel Expense Form</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
@@ -743,8 +743,8 @@
                         <i class="bi bi-x-lg"></i>
                     </button>
                     <div>
-                        <h1 class="topbar-title">Form Perjalanan Dinas</h1>
-                        <p class="topbar-sub">UI panel modern + preview dokumen 1:1 + export PDF</p>
+                        <h1 class="topbar-title">Travel Expense Form</h1>
+                        <p class="topbar-sub">Form Biaya Perjalanan</p>
                     </div>
                 </div>
 
@@ -783,7 +783,7 @@
                         <button class="step-btn active" type="button" data-step-target="tab-ump">
                             <div class="step-left">
                                 <span class="step-no">1</span>
-                                <span class="step-label">Uang Muka Perjalanan</span>
+                                <span class="step-label">Uang Muka</span>
                             </div>
                             <i class="bi bi-check-circle-fill step-check"></i>
                         </button>
@@ -791,15 +791,15 @@
                         <button class="step-btn" type="button" data-step-target="tab-realisasi">
                             <div class="step-left">
                                 <span class="step-no">2</span>
-                                <span class="step-label">Realisasi Biaya Perjalanan</span>
+                                <span class="step-label">Realisasi</span>
                             </div>
                             <i class="bi bi-check-circle-fill step-check"></i>
                         </button>
                     </div>
 
                     <div class="step-note">
-                        Preview mengikuti dokumen cetak. Untuk layar kecil, preview bisa di-hide lalu ditampilkan lagi
-                        saat ingin mengecek hasil.
+                        Isi tab Uang Muka untuk pengajuan awal. Setelah perjalanan selesai, buka tab Realisasi untuk
+                        mencatat biaya aktual. Gunakan tombol Hide Preview saat layar sempit.
                     </div>
                 </aside>
 
@@ -818,7 +818,8 @@
 
                     <div class="form-header">
                         <div class="form-title">Form Editor</div>
-                        <p class="form-desc">Isi data di kiri, lalu cek preview dokumen di kanan.</p>
+                        <p class="form-desc">Isi form di sebelah kiri, cek hasilnya di preview, lalu simpan draft atau
+                            download PDF jika sudah final.</p>
                     </div>
 
                     <div class="tab-content">
@@ -826,7 +827,8 @@
                         <div class="tab-pane fade show active" id="pane-ump" role="tabpanel">
                             <div class="section-card">
                                 <div class="section-card-title">Informasi Dokumen</div>
-                                <div class="section-card-desc">Bagian header dan identitas perjalanan.</div>
+                                <div class="section-card-desc">Isi informasi utama perjalanan dinas sesuai dokumen
+                                    pengajuan, termasuk tujuan, keperluan, periode, dan PIC terkait.</div>
 
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -878,15 +880,10 @@
 
                             <div class="section-card">
                                 <div class="section-card-title">Biaya Perjalanan</div>
-                                <div class="section-card-desc">Baris biaya sekarang dinamis. Bisa tambah baris utama
-                                    atau sub-baris.</div>
+                                <div class="section-card-desc">Tambahkan item biaya sesuai kebutuhan. Gunakan Item untuk
+                                    baris utama dan Sub-item untuk rincian tambahan.</div>
 
                                 <div class="editor-toolbar">
-                                    <div class="text-muted-small">
-                                        Tipe <strong>Item</strong> akan bernomor otomatis. Tipe
-                                        <strong>Sub-item</strong> tampil tanpa nomor seperti bagian “LAIN-LAIN”.
-                                    </div>
-
                                     <div class="editor-toolbar-actions">
                                         <button id="addItemRowBtn" class="mini-btn" type="button">
                                             <i class="bi bi-plus-lg"></i> Tambah item
@@ -917,7 +914,7 @@
 
                             <div class="section-card">
                                 <div class="section-card-title">Catatan</div>
-                                <div class="section-card-desc">Isi note seperti yang akan dicetak di bawah tabel.</div>
+                                <div class="section-card-desc">Tulis catatan atau keterangan tambahan yang perlu ikut tercetak pada dokumen PDF.</div>
 
                                 <label class="form-label">Note</label>
                                 <textarea rows="4" class="form-control sync-field" data-key="noteText"></textarea>
@@ -925,8 +922,7 @@
 
                             <div class="section-card">
                                 <div class="section-card-title">Tanda Tangan</div>
-                                <div class="section-card-desc">Upload PNG/JPG tanda tangan. Akan tampil di preview dan
-                                    PDF.</div>
+                                <div class="section-card-desc">Upload tanda tangan digital dalam format PNG/JPG agar langsung tampil di preview dan file PDF yang diunduh.</div>
 
                                 <div class="row g-3">
                                     <div class="col-md-4">
@@ -975,7 +971,7 @@
                         <div class="tab-pane fade" id="pane-realisasi" role="tabpanel">
                             <div class="section-card">
                                 <div class="section-card-title">Summary Realisasi</div>
-                                <div class="section-card-desc">Bagian ini hanya muncul saat tab Realisasi aktif.</div>
+                                <div class="section-card-desc">Isi nilai penerimaan dan total biaya aktual. Selisih akan dihitung otomatis dan bisa ditampilkan di preview.</div>
 
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -1019,8 +1015,7 @@
 
                             <div class="section-card">
                                 <div class="section-card-title">Catatan</div>
-                                <div class="section-card-desc">Biaya tetap memakai data yang sama dari editor biaya di
-                                    tab pertama.</div>
+                                <div class="section-card-desc">Tab ini menggunakan data biaya dari tab Uang Muka, jadi Anda tidak perlu menginput ulang rincian biaya.</div>
                             </div>
                         </div>
                     </div>
@@ -1030,7 +1025,7 @@
                 <aside class="preview-panel">
                     <div class="preview-head">
                         <h4>Preview</h4>
-                        <p>Proporsi dokumen dibuat lebih dekat ke format cetak.</p>
+                        <p>Pastikan isi dokumen, total biaya, dan tanda tangan sudah benar sebelum download PDF.</p>
                     </div>
 
                     <div class="preview-scroll">
