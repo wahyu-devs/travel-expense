@@ -7,20 +7,41 @@ const LEGACY_STORAGE_KEYS = [
     "travel_form_bootstrap_v4"
 ];
 
+const REALISASI_INFO_FIELDS = [
+    { baseKey: "companyName", realisasiKey: "realisasiCompanyName" },
+    { baseKey: "department", realisasiKey: "realisasiDepartment" },
+    { baseKey: "destination", realisasiKey: "realisasiDestination" },
+    { baseKey: "purpose", realisasiKey: "realisasiPurpose" },
+    { baseKey: "poNumber", realisasiKey: "realisasiPoNumber" },
+    { baseKey: "projectDuration", realisasiKey: "realisasiProjectDuration" },
+    { baseKey: "submissionPeriod", realisasiKey: "realisasiSubmissionPeriod" },
+    { baseKey: "installerName", realisasiKey: "realisasiInstallerName" },
+    { baseKey: "salesName", realisasiKey: "realisasiSalesName" }
+];
+
 const defaultCostRows = [];
 
 const defaultState = {
     companyName: "PT. PERKOM INDAH MURNI",
+    realisasiCompanyName: "PT. PERKOM INDAH MURNI",
     docDate: "",
     realisasiDocDate: "",
     department: "",
+    realisasiDepartment: "",
     destination: "",
+    realisasiDestination: "",
     purpose: "",
+    realisasiPurpose: "",
     poNumber: "",
+    realisasiPoNumber: "",
     projectDuration: "",
+    realisasiProjectDuration: "",
     submissionPeriod: "",
+    realisasiSubmissionPeriod: "",
     installerName: "",
+    realisasiInstallerName: "",
     salesName: "",
+    realisasiSalesName: "",
 
     noteText:
         `- SEMUA BUKTI PENGELUARAN HARUS DILAMPIRKAN PADA FORMULIR INI
@@ -36,6 +57,7 @@ const defaultState = {
     approvedSign: "",
 
     realisasiDocDateManualEdit: false,
+    realisasiInfoManualEdit: {},
     realisasiManualEdit: false,
     realisasiBaseCosts: clone(defaultCostRows),
     advanceCosts: clone(defaultCostRows),
@@ -46,6 +68,31 @@ let state = structuredClone(defaultState);
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
+}
+
+function hasOwnValue(source, key) {
+    return Object.prototype.hasOwnProperty.call(source, key);
+}
+
+function getRealisasiInfoPairByBase(key) {
+    return REALISASI_INFO_FIELDS.find(field => field.baseKey === key);
+}
+
+function getRealisasiInfoPairByKey(key) {
+    return REALISASI_INFO_FIELDS.find(field => field.realisasiKey === key);
+}
+
+function getRealisasiManualMap() {
+    if (!state.realisasiInfoManualEdit || typeof state.realisasiInfoManualEdit !== "object") {
+        state.realisasiInfoManualEdit = {};
+    }
+    return state.realisasiInfoManualEdit;
+}
+
+function updateSyncFieldValue(key, value) {
+    document.querySelectorAll(`.sync-field[data-key="${key}"]`).forEach(el => {
+        el.value = value ?? "";
+    });
 }
 
 function normalizeCostRows(rows, fallbackRows = []) {
@@ -116,19 +163,28 @@ function createResetState() {
         docDate: "",
         realisasiDocDate: "",
         department: "",
+        realisasiDepartment: "",
         destination: "",
+        realisasiDestination: "",
         purpose: "",
+        realisasiPurpose: "",
         poNumber: "",
+        realisasiPoNumber: "",
         projectDuration: "",
+        realisasiProjectDuration: "",
         submissionPeriod: "",
+        realisasiSubmissionPeriod: "",
         installerName: "",
+        realisasiInstallerName: "",
         salesName: "",
+        realisasiSalesName: "",
         preparedBy: "",
         checkedBy: "",
         preparedSign: "",
         checkedSign: "",
         approvedSign: "",
         realisasiDocDateManualEdit: false,
+        realisasiInfoManualEdit: {},
         realisasiManualEdit: false,
         realisasiBaseCosts: [],
         advanceCosts: [],
@@ -272,8 +328,39 @@ function calcDifferenceUsd() {
     return getDifferenceTotals().usd;
 }
 
+function normalizeRealisasiInfoState(parsed = {}) {
+    const parsedManualMap = parsed.realisasiInfoManualEdit && typeof parsed.realisasiInfoManualEdit === "object"
+        ? parsed.realisasiInfoManualEdit
+        : {};
+    const nextManualMap = {};
+
+    REALISASI_INFO_FIELDS.forEach(({ baseKey, realisasiKey }) => {
+        const baseValue = state[baseKey] ?? "";
+        const hasRealisasiValue = hasOwnValue(parsed, realisasiKey);
+        const storedManual = parsedManualMap[baseKey];
+
+        if (!hasRealisasiValue) {
+            state[realisasiKey] = baseValue;
+            nextManualMap[baseKey] = false;
+            return;
+        }
+
+        const isManual = typeof storedManual === "boolean"
+            ? storedManual
+            : (state[realisasiKey] ?? "") !== baseValue;
+
+        nextManualMap[baseKey] = isManual;
+        if (!isManual) {
+            state[realisasiKey] = baseValue;
+        }
+    });
+
+    state.realisasiInfoManualEdit = nextManualMap;
+}
+
 function applyStoredState(parsed = {}) {
     state = { ...clone(defaultState), ...parsed };
+    normalizeRealisasiInfoState(parsed);
     const legacyCosts = Array.isArray(parsed.costs) ? normalizeCostRows(parsed.costs, defaultCostRows) : null;
     const hasRealisasiBaseCosts = Array.isArray(parsed.realisasiBaseCosts);
     state.advanceCosts = normalizeCostRows(parsed.advanceCosts ?? legacyCosts, defaultCostRows);
@@ -752,12 +839,29 @@ function syncRealisasiDateDefault(changedKey) {
     });
 }
 
+function syncRealisasiInfoDefault(changedKey) {
+    const realisasiPair = getRealisasiInfoPairByKey(changedKey);
+    const manualMap = getRealisasiManualMap();
+
+    if (realisasiPair) {
+        manualMap[realisasiPair.baseKey] = true;
+        return;
+    }
+
+    const basePair = getRealisasiInfoPairByBase(changedKey);
+    if (!basePair || manualMap[basePair.baseKey]) return;
+
+    state[basePair.realisasiKey] = state[basePair.baseKey] ?? "";
+    updateSyncFieldValue(basePair.realisasiKey, state[basePair.realisasiKey]);
+}
+
 function bindStaticFields() {
     document.querySelectorAll(".sync-field").forEach(el => {
         el.addEventListener("input", () => {
             const key = el.dataset.key;
             state[key] = el.value;
             syncRealisasiDateDefault(key);
+            syncRealisasiInfoDefault(key);
             syncMatchingFields(el);
             renderPreview();
         });
@@ -1012,6 +1116,15 @@ function getPreviewDocDate(docType = getActiveDocType()) {
     return docType === "realisasi" ? state.realisasiDocDate : state.docDate;
 }
 
+function getPreviewInfoValue(docType, baseKey) {
+    if (docType !== "realisasi") {
+        return state[baseKey] ?? "";
+    }
+
+    const pair = getRealisasiInfoPairByBase(baseKey);
+    return pair ? state[pair.realisasiKey] ?? "" : state[baseKey] ?? "";
+}
+
 function renderPreviewCosts(docType = getActiveDocType()) {
     const tbody = document.getElementById("previewCostBody");
     const costs = getCosts(docType);
@@ -1081,19 +1194,19 @@ function renderPreview() {
             : "Lengkapi data perjalanan, biaya pengajuan, dan tanda tangan. Total pada tab ini digunakan sebagai receipt pada Realisasi."
     );
 
-    setText("pvCompanyName", state.companyName);
+    setText("pvCompanyName", getPreviewInfoValue(docType, "companyName"));
     const previewDocDate = getPreviewDocDate(docType);
     setText("pvDate", previewDocDate ? "Tanggal " + formatDateIndo(previewDocDate) : "Tanggal");
     setText("pvTitle", docType === "realisasi" ? "BIAYA PERJALANAN" : "UANG MUKA PERJALANAN");
 
-    setText("pvDepartment", state.department);
-    setText("pvDestination", state.destination);
-    setText("pvPurpose", state.purpose);
-    setText("pvPoNumber", state.poNumber);
-    setText("pvProjectDuration", state.projectDuration);
-    setText("pvSubmissionPeriod", state.submissionPeriod);
-    setText("pvInstallerName", state.installerName);
-    setText("pvSalesName", state.salesName);
+    setText("pvDepartment", getPreviewInfoValue(docType, "department"));
+    setText("pvDestination", getPreviewInfoValue(docType, "destination"));
+    setText("pvPurpose", getPreviewInfoValue(docType, "purpose"));
+    setText("pvPoNumber", getPreviewInfoValue(docType, "poNumber"));
+    setText("pvProjectDuration", getPreviewInfoValue(docType, "projectDuration"));
+    setText("pvSubmissionPeriod", getPreviewInfoValue(docType, "submissionPeriod"));
+    setText("pvInstallerName", getPreviewInfoValue(docType, "installerName"));
+    setText("pvSalesName", getPreviewInfoValue(docType, "salesName"));
 
     renderPreviewCosts(docType);
     setText("pvGrandTotal", formatNumber(activeTotals.rp));
