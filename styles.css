@@ -54,6 +54,12 @@ body {
     height: 100%;
 }
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
     overflow: hidden;
@@ -99,6 +105,10 @@ html[data-theme="light"] .topbar {
     min-width: 0;
 }
 
+.topbar-right {
+    min-width: 0;
+}
+
 .topbar-title {
     font-size: var(--fs-ui-lg);
     font-weight: 700;
@@ -116,7 +126,7 @@ html[data-theme="light"] .topbar {
 .icon-btn,
 .ghost-btn,
 .primary-btn {
-    border-radius: 10px;
+    border-radius: 8px;
     min-height: 36px;
     font-weight: 600;
     font-size: var(--fs-ui-base);
@@ -126,6 +136,7 @@ html[data-theme="light"] .topbar {
     gap: 6px;
     transition: .2s ease;
     line-height: 1.2;
+    touch-action: manipulation;
 }
 
 .icon-btn {
@@ -133,6 +144,10 @@ html[data-theme="light"] .topbar {
     border: 1px solid var(--line);
     background: transparent;
     color: var(--txt);
+}
+
+.mobile-menu-btn {
+    display: none;
 }
 
 .ghost-btn {
@@ -200,8 +215,9 @@ html[data-theme="light"] .sidebar {
 
 .step-btn {
     width: 100%;
+    min-width: 0;
     padding: 10px 10px;
-    border-radius: 10px;
+    border-radius: 8px;
     border: 1px solid var(--line-soft);
     background: transparent;
     color: var(--txt);
@@ -222,6 +238,7 @@ html[data-theme="light"] .sidebar {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 1 1 auto;
     min-width: 0;
 }
 
@@ -241,6 +258,7 @@ html[data-theme="light"] .sidebar {
     white-space: normal;
     overflow: visible;
     text-overflow: clip;
+    overflow-wrap: anywhere;
     font-size: var(--fs-ui-md);
     line-height: 1.3;
 }
@@ -308,7 +326,7 @@ body.preview-hidden .preview-panel {
 .section-card {
     border: 1px solid var(--line-soft);
     background: transparent;
-    border-radius: 14px;
+    border-radius: 8px;
     padding: 14px;
     margin-bottom: 14px;
 }
@@ -341,7 +359,7 @@ textarea.form-control {
     background: var(--input-bg);
     color: var(--txt);
     border-color: var(--line);
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: none;
 }
 
@@ -397,7 +415,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     border: 1px solid var(--line);
     background: transparent;
     color: var(--txt);
-    border-radius: 9px;
+    border-radius: 8px;
     min-height: 34px;
     padding: 0 10px;
     font-weight: 600;
@@ -419,7 +437,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
 .cost-editor-wrap {
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 8px;
     overflow: hidden;
 }
 
@@ -461,7 +479,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
 .signature-uploader {
     border: 1px dashed var(--line);
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 10px;
     background: transparent;
 }
@@ -504,7 +522,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     min-height: 0;
     overflow: auto;
     overscroll-behavior: contain;
-    border-radius: 14px;
+    border-radius: 8px;
     padding: 4px;
     min-width: 0;
     display: flex;
@@ -861,21 +879,100 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 }
 
 @media (max-width: 1023.98px) {
+    html,
+    body {
+        height: auto;
+    }
+
     body {
         overflow: auto;
+        overflow-x: hidden;
     }
 
     .app-shell {
         height: auto;
+        min-height: 100dvh;
+        max-width: none;
+        margin: 0;
+        padding: 0;
     }
 
     .workspace {
         height: auto;
+        min-height: 100dvh;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+    }
+
+    .topbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        flex-wrap: nowrap;
+        overflow: visible;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, .24);
+    }
+
+    .mobile-menu-btn {
+        display: inline-flex;
+        width: 44px;
+        min-height: 44px;
+        flex: 0 0 auto;
+        font-size: 1.15rem;
+    }
+
+    .topbar-left {
+        flex: 1 1 auto;
+    }
+
+    .topbar-right {
+        display: none !important;
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 12px;
+        width: min(280px, calc(100vw - 24px));
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, .36);
+    }
+
+    body.mobile-menu-open .topbar-right {
+        display: flex !important;
+        flex-direction: column;
+        flex-wrap: nowrap !important;
+        gap: 6px !important;
+        align-items: stretch !important;
+    }
+
+    .topbar-right .ghost-btn,
+    .topbar-right .primary-btn {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        min-height: 44px;
+        justify-content: flex-start;
+        padding: 0 12px;
+        text-align: left;
+    }
+
+    .topbar-right .ghost-btn span,
+    .topbar-right .primary-btn span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .main-grid {
         grid-template-columns: 1fr;
         overflow: visible;
+        min-width: 0;
+        padding-top: 65px;
     }
 
     body.preview-hidden .main-grid {
@@ -888,32 +985,45 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         border-bottom: 1px solid var(--line);
     }
 
+    .sidebar {
+        overflow: visible;
+        min-width: 0;
+    }
+
     .preview-panel {
         overflow: visible;
+        min-width: 0;
     }
 
     .form-panel {
         overflow: visible;
+        min-width: 0;
     }
 
     .preview-scroll {
-        overflow: auto;
+        max-width: 100%;
+        overflow-x: hidden;
+        overflow-y: visible;
     }
 
     .step-list {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        min-width: 0;
     }
+
 }
 
 @media (max-width: 767.98px) {
     .app-shell {
-        margin: 12px auto;
-        padding: 0 8px;
+        margin: 0;
+        padding: 0;
     }
 
     .topbar {
-        padding: 10px 12px;
+        gap: 8px;
+        padding: 10px;
+        min-width: 0;
     }
 
     .topbar-sub {
@@ -921,37 +1031,161 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     }
 
     .topbar {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        align-items: center;
     }
 
-    .topbar-left,
-    .topbar-right {
-        width: 100%;
+    .topbar-left {
+        width: auto;
+        flex: 1 1 auto;
     }
 
     .topbar-right {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
+        right: 10px;
+        width: min(280px, calc(100vw - 20px));
+    }
+
+    .topbar-right .ghost-btn,
+    .topbar-right .primary-btn {
+        font-size: var(--fs-ui-sm);
     }
 
     .sidebar,
     .form-panel,
     .preview-panel {
-        padding: 16px 14px;
+        padding: 12px;
     }
 
     .app-footer {
-        padding: 10px 14px;
+        padding: 10px 12px;
     }
 
     .step-list {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .step-btn {
+        align-items: flex-start;
+        min-height: 54px;
+        max-width: 100%;
+        padding: 9px 8px;
+    }
+
+    .step-left {
+        align-items: flex-start;
+    }
+
+    .step-check {
+        display: none;
+    }
+
+    .step-note {
+        display: none;
     }
 
     .form-title {
         font-size: var(--fs-ui-xl);
+    }
+
+    .section-card {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+
+    .form-control,
+    .form-select {
+        min-height: 44px;
+        font-size: 16px;
+    }
+
+    textarea.form-control {
+        font-size: 16px;
+    }
+
+    .editor-toolbar-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+    }
+
+    .editor-toolbar-actions .mini-btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .table-scroll {
+        overflow: visible;
+    }
+
+    .cost-editor-table {
+        display: block;
+        min-width: 0;
+    }
+
+    .cost-editor-table thead {
+        display: none;
+    }
+
+    .cost-editor-table tbody {
+        display: block;
+    }
+
+    .cost-editor-table tr {
+        display: grid;
+        gap: 8px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line-soft);
+    }
+
+    .cost-editor-table tr:last-child {
+        border-bottom: 0;
+    }
+
+    .cost-editor-table td {
+        display: grid;
+        grid-template-columns: 82px minmax(0, 1fr);
+        gap: 8px;
+        align-items: center;
+        padding: 0;
+        border-bottom: 0;
+    }
+
+    .cost-editor-table td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: var(--fs-ui-xs);
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .row-type-badge {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .delete-row-btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .signature-preview-mini {
+        max-width: none;
+        height: 72px;
+    }
+
+    .delete-sign-btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .preview-head p {
+        margin-bottom: 8px;
+    }
+
+    .preview-scroll {
+        padding: 0;
     }
 
     .doc-page {
@@ -975,4 +1209,18 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         flex: 1 1 0;
     }
 
+}
+
+@media (max-width: 374.98px) {
+    .step-list {
+        grid-template-columns: 1fr;
+    }
+
+    .cost-editor-table td {
+        grid-template-columns: 1fr;
+    }
+
+    .cost-editor-table td::before {
+        margin-bottom: -2px;
+    }
 }

@@ -915,22 +915,22 @@ function renderCostEditor(docType) {
     costs.forEach((row, index) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>
+          <td data-label="Tipe">
             <select class="form-select row-type-badge" data-cost-doc="${docType}" data-row-index="${index}" data-row-field="type">
               <option value="item" ${row.type === "item" ? "selected" : ""}>Item</option>
               <option value="sub" ${row.type === "sub" ? "selected" : ""}>Sub-item</option>
             </select>
           </td>
-          <td>
+          <td data-label="Deskripsi">
             <input type="text" class="form-control" data-cost-doc="${docType}" data-row-index="${index}" data-row-field="description" value="${escapeAttr(row.description)}" placeholder="Deskripsi biaya">
           </td>
-          <td>
+          <td data-label="Rp">
             <input type="text" inputmode="numeric" class="form-control" data-cost-doc="${docType}" data-row-index="${index}" data-row-field="rp" value="${row.rp === "" ? "" : formatInputThousands(row.rp)}" placeholder="0">
           </td>
-          <td>
+          <td data-label="USD">
             <input type="text" inputmode="numeric" class="form-control" data-cost-doc="${docType}" data-row-index="${index}" data-row-field="usd" value="${row.usd === "" ? "" : formatInputThousands(row.usd)}" placeholder="">
           </td>
-          <td class="text-center">
+          <td class="text-center" data-label="Aksi">
             <button class="mini-btn delete-row-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}">
               <i class="bi bi-trash3"></i>
             </button>
@@ -1153,9 +1153,7 @@ function updatePreviewScale() {
     const doc = document.getElementById("previewDocument");
     if (!panel || !scroll || !stage || !doc) return;
 
-    const isCompactLayout = window.matchMedia("(max-width: 1023.98px)").matches;
-
-    if (document.body.classList.contains("preview-hidden") || isCompactLayout) {
+    if (document.body.classList.contains("preview-hidden")) {
         stage.style.removeProperty("--preview-scale");
         stage.style.width = "";
         stage.style.height = "";
@@ -1314,15 +1312,74 @@ function bindTopActions() {
 
     document.getElementById("togglePreviewBtn").addEventListener("click", () => {
         document.body.classList.toggle("preview-hidden");
-        const hidden = document.body.classList.contains("preview-hidden");
-        document.getElementById("togglePreviewBtn").innerHTML = hidden
-            ? `<i class="bi bi-layout-sidebar"></i><span>Show Preview</span>`
-            : `<i class="bi bi-layout-sidebar-inset-reverse"></i><span>Hide Preview</span>`;
+        updatePreviewToggleButton();
         requestAnimationFrame(updatePreviewScale);
     });
 
     document.getElementById("printPdfBtn").addEventListener("click", printPdf);
     document.getElementById("downloadPdfBtn").addEventListener("click", downloadPdf);
+}
+
+function updatePreviewToggleButton() {
+    const button = document.getElementById("togglePreviewBtn");
+    if (!button) return;
+
+    const hidden = document.body.classList.contains("preview-hidden");
+    const compact = window.matchMedia("(max-width: 767.98px)").matches;
+    const label = compact ? "Preview" : (hidden ? "Show Preview" : "Hide Preview");
+    const icon = hidden ? "bi-layout-sidebar" : "bi-layout-sidebar-inset-reverse";
+
+    button.innerHTML = `<i class="bi ${icon}"></i><span>${label}</span>`;
+    button.setAttribute("aria-label", hidden ? "Show Preview" : "Hide Preview");
+}
+
+function isMobileActionMenuLayout() {
+    return window.matchMedia("(max-width: 1023.98px)").matches;
+}
+
+function setMobileActionMenuOpen(open) {
+    const shouldOpen = open && isMobileActionMenuLayout();
+    const button = document.getElementById("mobileMenuBtn");
+
+    document.body.classList.toggle("mobile-menu-open", shouldOpen);
+
+    if (!button) return;
+    button.setAttribute("aria-expanded", String(shouldOpen));
+    button.setAttribute("aria-label", shouldOpen ? "Tutup menu" : "Buka menu");
+    button.innerHTML = `<i class="bi ${shouldOpen ? "bi-x-lg" : "bi-list"}"></i>`;
+}
+
+function bindMobileActionMenu() {
+    const button = document.getElementById("mobileMenuBtn");
+    const menu = document.getElementById("topbarActions");
+    if (!button || !menu) return;
+
+    button.addEventListener("click", event => {
+        event.stopPropagation();
+        setMobileActionMenuOpen(!document.body.classList.contains("mobile-menu-open"));
+    });
+
+    menu.addEventListener("click", event => {
+        const actionButton = event.target instanceof Element
+            ? event.target.closest("button")
+            : null;
+        if (actionButton && isMobileActionMenuLayout()) {
+            setMobileActionMenuOpen(false);
+        }
+    });
+
+    document.addEventListener("click", event => {
+        if (!document.body.classList.contains("mobile-menu-open")) return;
+        const target = event.target instanceof Element ? event.target : null;
+        if (target && (menu.contains(target) || button.contains(target))) return;
+        setMobileActionMenuOpen(false);
+    });
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            setMobileActionMenuOpen(false);
+        }
+    });
 }
 
 async function waitForImages(container) {
@@ -1546,8 +1603,16 @@ function init() {
     bindSignatureInputs();
     bindTabsAndSteps();
     bindTopActions();
+    bindMobileActionMenu();
     bindDraftModalEvents();
-    window.addEventListener("resize", updatePreviewScale);
+    updatePreviewToggleButton();
+    window.addEventListener("resize", () => {
+        if (!isMobileActionMenuLayout()) {
+            setMobileActionMenuOpen(false);
+        }
+        updatePreviewToggleButton();
+        updatePreviewScale();
+    });
 }
 
 document.addEventListener("DOMContentLoaded", init);
