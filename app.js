@@ -219,14 +219,12 @@ function formatUsd(value) {
     return formatted ? `$ ${formatted}` : "";
 }
 
-// Helper: Format a number string with thousand separators for input fields
 function formatInputThousands(value) {
     const normalized = String(value ?? "").replace(/[^\d]/g, "");
     if (!normalized) return "";
     return new Intl.NumberFormat("id-ID").format(Number(normalized));
 }
 
-// Helper: Set the formatted value with thousand separators for an input element
 function setFormattedAmountValue(input) {
     if (!input) return;
     const rawDigits = String(input.value ?? "").replace(/[^\d]/g, "");
@@ -371,8 +369,6 @@ function applyStoredState(parsed = {}) {
     state.realisasiCosts = normalizeCostRows(parsed.realisasiCosts ?? legacyCosts, state.advanceCosts);
     state.realisasiBaseCosts = normalizeCostRows(parsed.realisasiBaseCosts ?? state.advanceCosts, state.advanceCosts);
     if (!hasRealisasiBaseCosts) {
-        // Draft lama belum punya snapshot dasar realisasi, jadi gunakan
-        // Uang Muka sebagai sumber awal agar perilaku sinkron konsisten.
         state.realisasiManualEdit = false;
     } else if (typeof parsed.realisasiManualEdit === "boolean") {
         state.realisasiManualEdit = parsed.realisasiManualEdit;
@@ -762,7 +758,6 @@ function clearLegacyState() {
     try {
         LEGACY_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
     } catch {
-        // Abaikan jika browser menolak akses storage.
     }
 }
 
@@ -772,7 +767,6 @@ function applyTheme(theme) {
     try {
         localStorage.setItem(THEME_KEY, nextTheme);
     } catch {
-        // Abaikan jika browser menolak akses storage.
     }
     const btn = document.getElementById("themeToggleBtn");
     if (!btn) return;
