@@ -798,7 +798,7 @@ function fillStaticFields() {
         el.checked = Boolean(state[key]);
     });
 
-    syncRealisasiSummaryInputs();
+    syncRealisasiSummaryValues();
     updateMiniSignaturePreview("preparedSign", state.preparedSign);
     updateMiniSignaturePreview("checkedSign", state.checkedSign);
     updateMiniSignaturePreview("approvedSign", state.approvedSign);
@@ -874,7 +874,21 @@ function bindStaticFields() {
     });
 }
 
-function syncRealisasiSummaryInputs() {
+function setSummaryValue(id, value, options = {}) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const hasValue = value !== "" && value !== null && value !== undefined;
+    const numericValue = hasValue ? toNumber(value) : null;
+    el.textContent = hasValue ? formatNumber(value) : "-";
+
+    if (options.tone) {
+        el.classList.toggle("is-negative", numericValue !== null && numericValue < 0);
+        el.classList.toggle("is-positive", numericValue !== null && numericValue > 0);
+    }
+}
+
+function syncRealisasiSummaryValues() {
     const advanceCosts = getCosts("ump");
     const realisasiCosts = getCosts("realisasi");
     const receiptTotals = getAdvanceTotals();
@@ -885,18 +899,16 @@ function syncRealisasiSummaryInputs() {
     const differenceHasUsd = receiptHasUsd || expenseHasUsd;
 
     const values = {
-        receiptRpInput: receiptTotals.rp,
-        receiptUsdInput: receiptHasUsd ? receiptTotals.usd : "",
-        totalExpenseRpInput: expenseTotals.rp,
-        totalExpenseUsdInput: expenseHasUsd ? expenseTotals.usd : "",
-        differenceRpInput: differenceTotals.rp,
-        differenceUsdInput: differenceHasUsd ? differenceTotals.usd : ""
+        receiptRpValue: { value: receiptTotals.rp },
+        receiptUsdValue: { value: receiptHasUsd ? receiptTotals.usd : "" },
+        totalExpenseRpValue: { value: expenseTotals.rp },
+        totalExpenseUsdValue: { value: expenseHasUsd ? expenseTotals.usd : "" },
+        differenceRpValue: { value: differenceTotals.rp, tone: true },
+        differenceUsdValue: { value: differenceHasUsd ? differenceTotals.usd : "", tone: true }
     };
 
-    Object.entries(values).forEach(([id, value]) => {
-        const input = document.getElementById(id);
-        if (!input) return;
-        input.value = value === "" ? "" : formatNumber(value ?? 0);
+    Object.entries(values).forEach(([id, options]) => {
+        setSummaryValue(id, options.value, { tone: options.tone });
     });
 }
 
@@ -1261,7 +1273,7 @@ function renderPreview() {
     const summary = document.getElementById("pvSummaryBlock");
     summary.classList.toggle("active", docType === "realisasi");
 
-    syncRealisasiSummaryInputs();
+    syncRealisasiSummaryValues();
 
     syncStepState();
     requestAnimationFrame(updatePreviewScale);

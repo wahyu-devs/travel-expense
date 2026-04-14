@@ -440,6 +440,46 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     display: none;
 }
 
+.summary-realisasi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.summary-stat {
+    min-width: 0;
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    background: var(--panel-2);
+    padding: 10px;
+}
+
+.summary-stat-label {
+    display: block;
+    color: var(--muted);
+    font-size: var(--fs-ui-xs);
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 5px;
+}
+
+.summary-stat-value {
+    display: block;
+    color: var(--txt);
+    font-size: var(--fs-ui-lg);
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.summary-stat-value.is-negative {
+    color: #fca5a5;
+}
+
+.summary-stat-value.is-positive {
+    color: #86efac;
+}
+
 .mini-btn {
     border: 1px solid var(--line);
     background: transparent;
@@ -570,6 +610,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     height: 1123px;
     min-height: 0;
     margin: 0 auto;
+    flex: 0 0 auto;
 }
 
 .preview-stage .doc-page {
@@ -1234,6 +1275,28 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     .section-card {
         padding: 12px;
         margin-bottom: 12px;
+    }
+
+    .summary-realisasi-grid {
+        grid-template-columns: 1fr;
+        gap: 7px;
+    }
+
+    .summary-stat {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+    }
+
+    .summary-stat-label {
+        margin-bottom: 0;
+    }
+
+    .summary-stat-value {
+        text-align: right;
+        font-size: var(--fs-ui-base);
     }
 
     .summary-realisasi-grid .summary-receipt-rp {

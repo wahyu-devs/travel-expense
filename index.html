@@ -318,41 +318,6 @@
                             </div>
 
                             <div class="section-card">
-                                <div class="section-card-title">Summary Realisasi</div>
-                                <div class="section-card-desc">Nilai receipt berasal dari total Uang Muka. Total
-                                    expense dan selisih dihitung dari biaya realisasi.</div>
-
-                                <div class="row g-3 summary-realisasi-grid">
-                                    <div class="col-md-6 summary-receipt-rp">
-                                        <label class="form-label">Receipt / Penerimaan Rp</label>
-                                        <input type="text" class="form-control" id="receiptRpInput" readonly>
-                                    </div>
-                                    <div class="col-md-6 summary-receipt-usd">
-                                        <label class="form-label">Receipt USD</label>
-                                        <input type="text" class="form-control" id="receiptUsdInput" readonly>
-                                    </div>
-
-                                    <div class="col-md-6 summary-expense-rp">
-                                        <label class="form-label">Total Expense Rp</label>
-                                        <input type="text" class="form-control" id="totalExpenseRpInput" readonly>
-                                    </div>
-                                    <div class="col-md-6 summary-expense-usd">
-                                        <label class="form-label">Total Expense USD</label>
-                                        <input type="text" class="form-control" id="totalExpenseUsdInput" readonly>
-                                    </div>
-
-                                    <div class="col-md-6 summary-difference-rp">
-                                        <label class="form-label">Selisih Rp</label>
-                                        <input type="text" class="form-control" id="differenceRpInput" readonly>
-                                    </div>
-                                    <div class="col-md-6 summary-difference-usd">
-                                        <label class="form-label">Selisih USD</label>
-                                        <input type="text" class="form-control" id="differenceUsdInput" readonly>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="section-card">
                                 <div class="section-card-title">Biaya Realisasi</div>
                                 <div class="section-card-desc">Masukkan biaya aktual. Data ini digunakan untuk preview,
                                     total expense, dan selisih.</div>
@@ -388,6 +353,39 @@
                                         <i class="bi bi-chevron-down"></i>
                                         <span>Lihat semua</span>
                                     </button>
+                                </div>
+                            </div>
+
+                            <div class="section-card summary-realisasi-card">
+                                <div class="section-card-title">Summary Realisasi</div>
+                                <div class="section-card-desc">Nilai receipt berasal dari total Uang Muka. Total
+                                    expense dan selisih dihitung dari biaya realisasi.</div>
+
+                                <div class="summary-realisasi-grid" aria-label="Summary Realisasi">
+                                    <div class="summary-stat summary-receipt-rp">
+                                        <span class="summary-stat-label">Receipt Rp</span>
+                                        <span class="summary-stat-value" id="receiptRpValue">0</span>
+                                    </div>
+                                    <div class="summary-stat summary-expense-rp">
+                                        <span class="summary-stat-label">Expense Rp</span>
+                                        <span class="summary-stat-value" id="totalExpenseRpValue">0</span>
+                                    </div>
+                                    <div class="summary-stat summary-difference-rp">
+                                        <span class="summary-stat-label">Selisih Rp</span>
+                                        <span class="summary-stat-value" id="differenceRpValue">0</span>
+                                    </div>
+                                    <div class="summary-stat summary-receipt-usd">
+                                        <span class="summary-stat-label">Receipt USD</span>
+                                        <span class="summary-stat-value" id="receiptUsdValue">-</span>
+                                    </div>
+                                    <div class="summary-stat summary-expense-usd">
+                                        <span class="summary-stat-label">Expense USD</span>
+                                        <span class="summary-stat-value" id="totalExpenseUsdValue">-</span>
+                                    </div>
+                                    <div class="summary-stat summary-difference-usd">
+                                        <span class="summary-stat-label">Selisih USD</span>
+                                        <span class="summary-stat-value" id="differenceUsdValue">-</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
