@@ -101,11 +101,36 @@ html[data-theme="light"] .topbar {
 .topbar-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
     min-width: 0;
 }
 
 .topbar-right {
+    min-width: 0;
+}
+
+.topbar-logo {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--chip);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--txt);
+    flex: 0 0 auto;
+}
+
+.topbar-logo-icon {
+    display: block;
+    font-size: 1.2rem;
+    line-height: 1;
+    transform: rotate(45deg);
+    transform-origin: center;
+}
+
+.topbar-copy {
     min-width: 0;
 }
 
