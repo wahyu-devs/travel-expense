@@ -1133,17 +1133,18 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     }
 
     .step-btn {
+        display: grid;
+        grid-template-columns: 22px max-content 16px;
         align-items: center;
         justify-content: center;
         min-height: 44px;
         max-width: 100%;
         padding: 8px 10px;
+        column-gap: 7px;
     }
 
     .step-left {
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
+        display: contents;
     }
 
     .step-no {
@@ -1174,7 +1175,11 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     }
 
     .step-check {
-        display: none;
+        display: inline-flex;
+        grid-column: 3;
+        justify-self: center;
+        color: #22c55e;
+        font-size: var(--fs-ui-sm);
     }
 
     .step-note {
