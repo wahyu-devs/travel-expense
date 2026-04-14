@@ -1236,6 +1236,30 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         margin-bottom: 12px;
     }
 
+    .summary-realisasi-grid .summary-receipt-rp {
+        order: 1;
+    }
+
+    .summary-realisasi-grid .summary-expense-rp {
+        order: 2;
+    }
+
+    .summary-realisasi-grid .summary-difference-rp {
+        order: 3;
+    }
+
+    .summary-realisasi-grid .summary-receipt-usd {
+        order: 4;
+    }
+
+    .summary-realisasi-grid .summary-expense-usd {
+        order: 5;
+    }
+
+    .summary-realisasi-grid .summary-difference-usd {
+        order: 6;
+    }
+
     .form-control,
     .form-select {
         min-height: 44px;
