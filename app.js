@@ -65,6 +65,10 @@ const defaultState = {
 };
 
 let state = structuredClone(defaultState);
+const costEditorCollapsed = {
+    ump: true,
+    realisasi: true
+};
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -906,6 +910,37 @@ function getCostEditorBodyId(docType) {
     return docType === "realisasi" ? "realisasiCostEditorBody" : "costEditorBody";
 }
 
+function getCostCollapseButtonId(docType) {
+    return docType === "realisasi" ? "toggleRealisasiCostRowsBtn" : "toggleCostRowsBtn";
+}
+
+function updateCostCollapseState(docType) {
+    const tbody = document.getElementById(getCostEditorBodyId(docType));
+    const button = document.getElementById(getCostCollapseButtonId(docType));
+    const wrap = tbody?.closest(".cost-editor-wrap");
+    const costs = getCosts(docType);
+    const canCollapse = costs.length > 1;
+
+    if (!button || !wrap) return;
+
+    button.hidden = !canCollapse;
+    if (!canCollapse) {
+        costEditorCollapsed[docType] = true;
+    }
+
+    const collapsed = canCollapse && costEditorCollapsed[docType];
+    wrap.classList.toggle("cost-collapsed", collapsed);
+    button.setAttribute("aria-expanded", String(!collapsed));
+    button.innerHTML = collapsed
+        ? `<i class="bi bi-chevron-down"></i><span>Lihat semua (${costs.length})</span>`
+        : `<i class="bi bi-chevron-up"></i><span>Ringkas</span>`;
+}
+
+function toggleCostEditorCollapse(docType) {
+    costEditorCollapsed[docType] = !costEditorCollapsed[docType];
+    updateCostCollapseState(docType);
+}
+
 function renderCostEditor(docType) {
     const tbody = document.getElementById(getCostEditorBodyId(docType));
     const costs = getCosts(docType);
@@ -938,6 +973,8 @@ function renderCostEditor(docType) {
         `;
         tbody.appendChild(tr);
     });
+
+    updateCostCollapseState(docType);
 }
 
 function renderAllCostEditors() {
@@ -1040,6 +1077,7 @@ function addRow(docType, type) {
         syncRealisasiCostsFromAdvance();
     }
 
+    costEditorCollapsed[docType] = false;
     renderAllCostEditors();
     renderPreview();
 }
@@ -1287,6 +1325,8 @@ function bindTopActions() {
     document.getElementById("addSubRowBtn").addEventListener("click", () => addRow("ump", "sub"));
     document.getElementById("addRealisasiItemRowBtn").addEventListener("click", () => addRow("realisasi", "item"));
     document.getElementById("addRealisasiSubRowBtn").addEventListener("click", () => addRow("realisasi", "sub"));
+    document.getElementById("toggleCostRowsBtn").addEventListener("click", () => toggleCostEditorCollapse("ump"));
+    document.getElementById("toggleRealisasiCostRowsBtn").addEventListener("click", () => toggleCostEditorCollapse("realisasi"));
 
     document.getElementById("saveDraftBtn").addEventListener("click", () => {
         const result = saveDraftToCollection();
@@ -1325,8 +1365,7 @@ function updatePreviewToggleButton() {
     if (!button) return;
 
     const hidden = document.body.classList.contains("preview-hidden");
-    const compact = window.matchMedia("(max-width: 767.98px)").matches;
-    const label = compact ? "Preview" : (hidden ? "Show Preview" : "Hide Preview");
+    const label = hidden ? "Show Preview" : "Hide Preview";
     const icon = hidden ? "bi-layout-sidebar" : "bi-layout-sidebar-inset-reverse";
 
     button.innerHTML = `<i class="bi ${icon}"></i><span>${label}</span>`;

@@ -411,6 +411,10 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     flex-wrap: wrap;
 }
 
+.cost-collapse-btn {
+    display: none;
+}
+
 .mini-btn {
     border: 1px solid var(--line);
     background: transparent;
@@ -504,15 +508,20 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     margin: 0 auto;
 }
 
+.preview-head {
+    margin-bottom: 12px;
+}
+
 .preview-head h4 {
     font-weight: 800;
-    margin-bottom: 3px;
+    margin: 0 0 4px;
     font-size: var(--fs-ui-xl);
+    line-height: 1.25;
 }
 
 .preview-head p {
     color: var(--muted);
-    margin-bottom: 10px;
+    margin: 0;
     font-size: var(--fs-ui-sm);
     line-height: 1.4;
 }
@@ -533,7 +542,8 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 .preview-stage {
     position: relative;
     width: 794px;
-    min-height: 1123px;
+    height: 1123px;
+    min-height: 0;
     margin: 0 auto;
 }
 
@@ -913,7 +923,6 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         z-index: 50;
         flex-wrap: nowrap;
         overflow: visible;
-        box-shadow: 0 10px 28px rgba(0, 0, 0, .24);
     }
 
     .mobile-menu-btn {
@@ -933,8 +942,8 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         position: absolute;
         top: calc(100% + 8px);
         right: 12px;
-        width: min(280px, calc(100vw - 24px));
-        padding: 8px;
+        width: min(190px, calc(100vw - 24px));
+        padding: 6px;
         border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--panel-2);
@@ -945,7 +954,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         display: flex !important;
         flex-direction: column;
         flex-wrap: nowrap !important;
-        gap: 6px !important;
+        gap: 5px !important;
         align-items: stretch !important;
     }
 
@@ -956,7 +965,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         min-width: 0;
         min-height: 44px;
         justify-content: flex-start;
-        padding: 0 12px;
+        padding: 0 10px;
         text-align: left;
     }
 
@@ -970,9 +979,11 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
     .main-grid {
         grid-template-columns: 1fr;
+        align-content: start;
         overflow: visible;
         min-width: 0;
-        padding-top: 65px;
+        padding-top: 68px;
+        padding-bottom: 42px;
     }
 
     body.preview-hidden .main-grid {
@@ -988,16 +999,32 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     .sidebar {
         overflow: visible;
         min-width: 0;
+        padding-top: 8px;
     }
 
     .preview-panel {
+        display: block;
         overflow: visible;
         min-width: 0;
+        padding-top: 12px;
     }
 
     .form-panel {
         overflow: visible;
         min-width: 0;
+        padding-bottom: 12px;
+    }
+
+    .form-panel .tab-pane.active > .section-card:last-child {
+        margin-bottom: 0;
+    }
+
+    .preview-head h4 {
+        margin-top: 0;
+    }
+
+    .preview-head {
+        margin-bottom: 14px;
     }
 
     .preview-scroll {
@@ -1012,6 +1039,21 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         min-width: 0;
     }
 
+    .app-footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
+        padding: 8px 12px;
+        font-size: 0.62rem;
+        text-align: center;
+    }
+
+    .app-footer div {
+        white-space: nowrap;
+    }
+
 }
 
 @media (max-width: 767.98px) {
@@ -1022,12 +1064,19 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
     .topbar {
         gap: 8px;
-        padding: 10px;
+        padding: 12px 10px;
         min-width: 0;
     }
 
     .topbar-sub {
-        display: none;
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--fs-ui-xs);
+        line-height: 1.2;
+        margin-top: 3px;
     }
 
     .topbar {
@@ -1038,11 +1087,21 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     .topbar-left {
         width: auto;
         flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .topbar-left > div {
+        min-width: 0;
+    }
+
+    .topbar-title {
+        font-size: var(--fs-ui-xl);
+        line-height: 1.15;
     }
 
     .topbar-right {
         right: 10px;
-        width: min(280px, calc(100vw - 20px));
+        width: min(190px, calc(100vw - 20px));
     }
 
     .topbar-right .ghost-btn,
@@ -1056,24 +1115,62 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         padding: 12px;
     }
 
+    .form-panel {
+        padding-bottom: 12px;
+    }
+
+    .preview-panel {
+        padding: 14px 12px 12px;
+    }
+
     .app-footer {
-        padding: 10px 12px;
+        padding: 8px 12px;
     }
 
     .step-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
+        gap: 6px;
     }
 
     .step-btn {
-        align-items: flex-start;
-        min-height: 54px;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
         max-width: 100%;
-        padding: 9px 8px;
+        padding: 8px 10px;
     }
 
     .step-left {
-        align-items: flex-start;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+    }
+
+    .step-no {
+        width: 22px;
+        height: 22px;
+        font-size: var(--fs-ui-2xs);
+    }
+
+    .step-btn.active .step-no {
+        border-color: var(--line);
+        background: rgba(255, 255, 255, .04);
+    }
+
+    .step-label {
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0;
+        line-height: 1;
+    }
+
+    .step-label::after {
+        content: attr(data-mobile-label);
+        font-size: var(--fs-ui-xs);
+        line-height: 1.2;
+        font-weight: 800;
     }
 
     .step-check {
@@ -1085,7 +1182,23 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     }
 
     .form-title {
-        font-size: var(--fs-ui-xl);
+        font-size: var(--fs-ui-lg);
+        line-height: 1.25;
+    }
+
+    .form-desc {
+        font-size: var(--fs-ui-sm);
+        line-height: 1.5;
+    }
+
+    .section-card-title {
+        font-size: var(--fs-ui-lg);
+        line-height: 1.25;
+    }
+
+    .section-card-desc {
+        font-size: var(--fs-ui-xs);
+        line-height: 1.45;
     }
 
     .section-card {
@@ -1115,7 +1228,22 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         min-height: 44px;
     }
 
+    .cost-collapse-btn:not([hidden]) {
+        display: inline-flex;
+        width: 100%;
+        min-height: 40px;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
     .table-scroll {
+        overflow: visible;
+    }
+
+    .cost-editor-wrap {
+        border: 0;
         overflow: visible;
     }
 
@@ -1133,31 +1261,48 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     }
 
     .cost-editor-table tr {
-        display: grid;
-        gap: 8px;
-        padding: 12px 0;
-        border-bottom: 1px solid var(--line-soft);
+        display: block;
+        padding: 12px;
+        margin-bottom: 10px;
+        border: 1px solid var(--line-soft);
+        border-radius: 8px;
+        background: var(--panel-2);
     }
 
     .cost-editor-table tr:last-child {
-        border-bottom: 0;
+        margin-bottom: 0;
+    }
+
+    .cost-editor-wrap.cost-collapsed .cost-editor-table tbody tr:nth-child(n+2) {
+        display: none;
+    }
+
+    .cost-editor-wrap.cost-collapsed .cost-editor-table tbody tr:first-child {
+        margin-bottom: 0;
     }
 
     .cost-editor-table td {
-        display: grid;
-        grid-template-columns: 82px minmax(0, 1fr);
-        gap: 8px;
-        align-items: center;
+        display: block;
         padding: 0;
         border-bottom: 0;
     }
 
+    .cost-editor-table td + td {
+        margin-top: 10px;
+    }
+
     .cost-editor-table td::before {
         content: attr(data-label);
+        display: block;
         color: var(--muted);
         font-size: var(--fs-ui-xs);
         font-weight: 800;
         line-height: 1.2;
+        margin-bottom: 6px;
+    }
+
+    .cost-editor-table td[data-label="Aksi"]::before {
+        display: none;
     }
 
     .row-type-badge {
@@ -1168,6 +1313,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     .delete-row-btn {
         width: 100%;
         min-height: 44px;
+        margin-top: 2px;
     }
 
     .signature-preview-mini {
@@ -1181,7 +1327,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     }
 
     .preview-head p {
-        margin-bottom: 8px;
+        line-height: 1.45;
     }
 
     .preview-scroll {
@@ -1213,7 +1359,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
 @media (max-width: 374.98px) {
     .step-list {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .cost-editor-table td {

@@ -75,7 +75,7 @@
                             type="button" role="tab" aria-controls="pane-ump" aria-selected="true">
                             <div class="step-left">
                                 <span class="step-no">1</span>
-                                <span class="step-label">Uang Muka Perjalanan</span>
+                                <span class="step-label" data-mobile-label="Uang Muka">Uang Muka Perjalanan</span>
                             </div>
                             <i class="bi bi-check-circle-fill step-check"></i>
                         </button>
@@ -84,7 +84,7 @@
                             type="button" role="tab" aria-controls="pane-realisasi" aria-selected="false">
                             <div class="step-left">
                                 <span class="step-no">2</span>
-                                <span class="step-label">Realisasi Biaya Perjalanan</span>
+                                <span class="step-label" data-mobile-label="Realisasi">Realisasi Biaya Perjalanan</span>
                             </div>
                             <i class="bi bi-check-circle-fill step-check"></i>
                         </button>
@@ -188,6 +188,11 @@
                                             <tbody id="costEditorBody"></tbody>
                                         </table>
                                     </div>
+                                    <button id="toggleCostRowsBtn" class="mini-btn cost-collapse-btn" type="button"
+                                        data-cost-doc="ump" aria-expanded="false" hidden>
+                                        <i class="bi bi-chevron-down"></i>
+                                        <span>Lihat semua</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -375,6 +380,11 @@
                                             <tbody id="realisasiCostEditorBody"></tbody>
                                         </table>
                                     </div>
+                                    <button id="toggleRealisasiCostRowsBtn" class="mini-btn cost-collapse-btn" type="button"
+                                        data-cost-doc="realisasi" aria-expanded="false" hidden>
+                                        <i class="bi bi-chevron-down"></i>
+                                        <span>Lihat semua</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
