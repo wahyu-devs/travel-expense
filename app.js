@@ -708,6 +708,108 @@ function closeDraftModal() {
     document.body.classList.remove("draft-modal-open");
 }
 
+function getToastIcon(type) {
+    if (type === "success") return "bi-check-circle-fill";
+    if (type === "error" || type === "danger") return "bi-exclamation-circle-fill";
+    if (type === "warning") return "bi-exclamation-triangle-fill";
+    return "bi-info-circle-fill";
+}
+
+function showToast(message, options = {}) {
+    const region = document.getElementById("toastRegion");
+    if (!region) return;
+
+    const { type = "info", duration = 3200 } = options;
+    const toast = document.createElement("div");
+    toast.className = `app-toast app-toast-${type}`;
+    toast.setAttribute("role", type === "error" || type === "danger" ? "alert" : "status");
+
+    const icon = document.createElement("i");
+    icon.className = `bi ${getToastIcon(type)}`;
+
+    const text = document.createElement("div");
+    text.className = "app-toast-message";
+    text.textContent = message;
+
+    toast.append(icon, text);
+    region.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add("show"));
+
+    window.setTimeout(() => {
+        toast.classList.remove("show");
+        window.setTimeout(() => toast.remove(), 220);
+    }, duration);
+}
+
+const confirmDialogState = {
+    resolve: null,
+    lastFocused: null
+};
+
+function closeConfirmDialog(confirmed) {
+    const dialog = document.getElementById("confirmDialog");
+    if (!dialog || dialog.hidden) return;
+
+    dialog.hidden = true;
+    document.body.classList.remove("confirm-dialog-open");
+
+    const resolve = confirmDialogState.resolve;
+    const lastFocused = confirmDialogState.lastFocused;
+    confirmDialogState.resolve = null;
+    confirmDialogState.lastFocused = null;
+
+    if (lastFocused instanceof HTMLElement) {
+        lastFocused.focus();
+    }
+
+    resolve?.(confirmed);
+}
+
+function showConfirmDialog(options = {}) {
+    const dialog = document.getElementById("confirmDialog");
+    const panel = dialog?.querySelector(".confirm-dialog-panel");
+    const title = document.getElementById("confirmDialogTitle");
+    const message = document.getElementById("confirmDialogMessage");
+    const icon = document.getElementById("confirmDialogIcon");
+    const cancelButton = document.getElementById("confirmCancelBtn");
+    const acceptButton = document.getElementById("confirmAcceptBtn");
+
+    if (!dialog || !panel || !title || !message || !icon || !cancelButton || !acceptButton) {
+        return Promise.resolve(false);
+    }
+
+    if (confirmDialogState.resolve) {
+        closeConfirmDialog(false);
+    }
+
+    const {
+        title: nextTitle = "Konfirmasi",
+        message: nextMessage = "Lanjutkan tindakan ini?",
+        confirmLabel = "Lanjutkan",
+        cancelLabel = "Batal",
+        tone = "warning",
+        icon: iconName = tone === "danger" ? "bi-exclamation-triangle-fill" : "bi-question-circle-fill"
+    } = options;
+
+    title.textContent = nextTitle;
+    message.textContent = nextMessage;
+    cancelButton.textContent = cancelLabel;
+    acceptButton.textContent = confirmLabel;
+    icon.className = `bi ${iconName}`;
+    panel.classList.toggle("danger", tone === "danger");
+    acceptButton.classList.toggle("danger-btn", tone === "danger");
+
+    confirmDialogState.lastFocused = document.activeElement;
+    dialog.hidden = false;
+    document.body.classList.add("confirm-dialog-open");
+
+    return new Promise(resolve => {
+        confirmDialogState.resolve = resolve;
+        requestAnimationFrame(() => cancelButton.focus());
+    });
+}
+
 function bindDraftModalEvents() {
     const modal = document.getElementById("draftModal");
     const listEl = document.getElementById("draftListBody");
@@ -717,7 +819,7 @@ function bindDraftModalEvents() {
     document.getElementById("draftModalCloseBtn")?.addEventListener("click", closeDraftModal);
     document.getElementById("draftModalBackdrop")?.addEventListener("click", closeDraftModal);
 
-    listEl.addEventListener("click", event => {
+    listEl.addEventListener("click", async event => {
         const target = event.target instanceof Element ? event.target : null;
         if (!target) return;
         const loadButton = target.closest("[data-load-draft-id]");
@@ -729,27 +831,52 @@ function bindDraftModalEvents() {
                 renderCurrentState();
                 closeDraftModal();
             }
-            alert(result.loaded
-                ? "Draft berhasil dimuat dari browser."
-                : result.message);
+            showToast(
+                result.loaded ? "Draft berhasil dimuat dari browser." : result.message,
+                { type: result.loaded ? "success" : "error" }
+            );
             return;
         }
 
         if (deleteButton) {
-            const ok = confirm("Hapus draft ini dari browser?");
+            const ok = await showConfirmDialog({
+                title: "Hapus Draft?",
+                message: "Draft ini akan dihapus dari browser ini dan tidak bisa dikembalikan.",
+                confirmLabel: "Hapus",
+                tone: "danger"
+            });
             if (!ok) return;
             const result = deleteDraftFromCollection(deleteButton.dataset.deleteDraftId);
             if (!result.ok) {
-                alert(result.message);
+                showToast(result.message, { type: "error" });
                 return;
             }
             renderDraftList();
+            showToast("Draft berhasil dihapus.", { type: "success" });
         }
     });
 
     document.addEventListener("keydown", event => {
-        if (event.key === "Escape" && !modal.hidden) {
+        const confirmDialog = document.getElementById("confirmDialog");
+        const confirmOpen = confirmDialog && !confirmDialog.hidden;
+        if (event.key === "Escape" && !modal.hidden && !confirmOpen) {
             closeDraftModal();
+        }
+    });
+}
+
+function bindConfirmDialogEvents() {
+    const dialog = document.getElementById("confirmDialog");
+    if (!dialog || dialog.dataset.bound === "true") return;
+    dialog.dataset.bound = "true";
+
+    document.getElementById("confirmCancelBtn")?.addEventListener("click", () => closeConfirmDialog(false));
+    document.getElementById("confirmDialogBackdrop")?.addEventListener("click", () => closeConfirmDialog(false));
+    document.getElementById("confirmAcceptBtn")?.addEventListener("click", () => closeConfirmDialog(true));
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !dialog.hidden) {
+            closeConfirmDialog(false);
         }
     });
 }
@@ -1197,7 +1324,10 @@ function updatePreviewScale() {
     const doc = document.getElementById("previewDocument");
     if (!panel || !scroll || !stage || !doc) return;
 
-    if (document.body.classList.contains("preview-hidden")) {
+    const previewUnavailable = document.body.classList.contains("preview-hidden")
+        || (isMobileActionMenuLayout() && !document.body.classList.contains("mobile-preview-mode"));
+
+    if (previewUnavailable) {
         stage.style.removeProperty("--preview-scale");
         stage.style.width = "";
         stage.style.height = "";
@@ -1309,6 +1439,10 @@ function activateDocTab(tabId) {
     });
 
     renderPreview();
+
+    if (isMobileActionMenuLayout()) {
+        window.scrollTo(0, 0);
+    }
 }
 
 function bindTabsAndSteps() {
@@ -1336,19 +1470,25 @@ function bindTopActions() {
 
     document.getElementById("saveDraftBtn").addEventListener("click", () => {
         const result = saveDraftToCollection();
-        alert(result.message);
+        showToast(result.message, { type: result.ok ? "success" : "error" });
     });
 
     document.getElementById("loadDraftBtn").addEventListener("click", () => {
         openDraftModal();
     });
 
-    document.getElementById("resetBtn").addEventListener("click", () => {
-        const ok = confirm("Kosongkan form?");
+    document.getElementById("resetBtn").addEventListener("click", async () => {
+        const ok = await showConfirmDialog({
+            title: "Kosongkan Form?",
+            message: "Semua data yang sedang diisi akan dikembalikan ke nilai awal.",
+            confirmLabel: "Reset",
+            tone: "danger"
+        });
         if (!ok) return;
         state = createResetState();
         saveState();
         renderCurrentState();
+        showToast("Form berhasil dikosongkan.", { type: "success" });
     });
 
     document.getElementById("themeToggleBtn").addEventListener("click", () => {
@@ -1356,26 +1496,50 @@ function bindTopActions() {
         applyTheme(current === "dark" ? "light" : "dark");
     });
 
-    document.getElementById("togglePreviewBtn").addEventListener("click", () => {
-        document.body.classList.toggle("preview-hidden");
-        updatePreviewToggleButton();
-        requestAnimationFrame(updatePreviewScale);
-    });
+    document.getElementById("togglePreviewBtn").addEventListener("click", togglePreviewVisibility);
 
-    document.getElementById("printPdfBtn").addEventListener("click", printPdf);
-    document.getElementById("downloadPdfBtn").addEventListener("click", downloadPdf);
+    document.getElementById("printPdfBtn").addEventListener("click", () => printPdf());
+    document.getElementById("downloadPdfBtn").addEventListener("click", () => downloadPdf());
+}
+
+function setMobilePreviewMode(open) {
+    const shouldOpen = open && isMobileActionMenuLayout();
+    document.body.classList.toggle("mobile-preview-mode", shouldOpen);
+
+    if (shouldOpen) {
+        document.body.classList.remove("preview-hidden");
+    }
+
+    window.scrollTo(0, 0);
+    updatePreviewToggleButton();
+    requestAnimationFrame(updatePreviewScale);
+}
+
+function togglePreviewVisibility() {
+    if (isMobileActionMenuLayout()) {
+        setMobilePreviewMode(!document.body.classList.contains("mobile-preview-mode"));
+        return;
+    }
+
+    document.body.classList.toggle("preview-hidden");
+    document.body.classList.remove("mobile-preview-mode");
+    updatePreviewToggleButton();
+    requestAnimationFrame(updatePreviewScale);
 }
 
 function updatePreviewToggleButton() {
     const button = document.getElementById("togglePreviewBtn");
     if (!button) return;
 
-    const hidden = document.body.classList.contains("preview-hidden");
+    const hidden = isMobileActionMenuLayout()
+        ? !document.body.classList.contains("mobile-preview-mode")
+        : document.body.classList.contains("preview-hidden");
     const label = hidden ? "Show Preview" : "Hide Preview";
     const icon = hidden ? "bi-layout-sidebar" : "bi-layout-sidebar-inset-reverse";
 
     button.innerHTML = `<i class="bi ${icon}"></i><span>${label}</span>`;
     button.setAttribute("aria-label", hidden ? "Show Preview" : "Hide Preview");
+    updateMobileActionbarState();
 }
 
 function isMobileActionMenuLayout() {
@@ -1385,8 +1549,15 @@ function isMobileActionMenuLayout() {
 function setMobileActionMenuOpen(open) {
     const shouldOpen = open && isMobileActionMenuLayout();
     const button = document.getElementById("mobileMenuBtn");
+    const menu = document.getElementById("topbarActions");
 
     document.body.classList.toggle("mobile-menu-open", shouldOpen);
+
+    if (menu) {
+        const mobileLayout = isMobileActionMenuLayout();
+        menu.inert = mobileLayout && !shouldOpen;
+        menu.setAttribute("aria-hidden", mobileLayout && !shouldOpen ? "true" : "false");
+    }
 
     if (!button) return;
     button.setAttribute("aria-expanded", String(shouldOpen));
@@ -1425,6 +1596,129 @@ function bindMobileActionMenu() {
             setMobileActionMenuOpen(false);
         }
     });
+}
+
+function updateMobileActionbarState() {
+    const button = document.getElementById("mobilePreviewToggleBtn");
+    if (!button) return;
+
+    const previewOpen = document.body.classList.contains("mobile-preview-mode");
+    const icon = button.querySelector("i");
+    const label = button.querySelector("span");
+
+    button.classList.toggle("active", previewOpen);
+    button.setAttribute("aria-label", previewOpen ? "Kembali ke form" : "Buka preview");
+
+    if (icon) {
+        icon.className = `bi ${previewOpen ? "bi-pencil-square" : "bi-layout-sidebar"}`;
+    }
+
+    if (label) {
+        label.textContent = previewOpen ? "Form" : "Preview";
+    }
+}
+
+function bindMobileAppActions() {
+    const previewButton = document.getElementById("mobilePreviewToggleBtn");
+    const previewBackButton = document.getElementById("previewBackBtn");
+    const saveButton = document.getElementById("mobileSaveDraftBtn");
+    const loadButton = document.getElementById("mobileLoadDraftBtn");
+    const resetButton = document.getElementById("mobileResetBtn");
+    const printButton = document.getElementById("mobilePrintPdfBtn");
+    const downloadButton = document.getElementById("mobileDownloadPdfBtn");
+
+    previewButton?.addEventListener("click", () => {
+        setMobilePreviewMode(!document.body.classList.contains("mobile-preview-mode"));
+    });
+
+    previewBackButton?.addEventListener("click", () => setMobilePreviewMode(false));
+
+    saveButton?.addEventListener("click", () => {
+        const result = saveDraftToCollection();
+        showToast(result.message, { type: result.ok ? "success" : "error" });
+    });
+
+    loadButton?.addEventListener("click", openDraftModal);
+
+    resetButton?.addEventListener("click", async () => {
+        const ok = await showConfirmDialog({
+            title: "Kosongkan Form?",
+            message: "Semua data yang sedang diisi akan dikembalikan ke nilai awal.",
+            confirmLabel: "Reset",
+            tone: "danger"
+        });
+        if (!ok) return;
+        state = createResetState();
+        saveState();
+        renderCurrentState();
+        showToast("Form berhasil dikosongkan.", { type: "success" });
+    });
+
+    printButton?.addEventListener("click", () => printPdf(printButton));
+    downloadButton?.addEventListener("click", () => downloadPdf(downloadButton));
+}
+
+function isMobileFormLayout() {
+    return window.matchMedia("(max-width: 767.98px)").matches;
+}
+
+function shouldStartSectionCollapsed(card) {
+    const title = card.querySelector(":scope > .section-card-title")?.textContent?.trim() || "";
+    return title === "Catatan" || title === "Tanda Tangan";
+}
+
+function updateMobileSections() {
+    const mobile = isMobileFormLayout();
+
+    document.querySelectorAll(".tab-pane .section-card").forEach(card => {
+        const title = card.querySelector(":scope > .section-card-title");
+        if (!title) return;
+
+        card.classList.toggle("mobile-collapsible", mobile);
+
+        if (!mobile) {
+            card.classList.remove("mobile-section-collapsed");
+            delete card.dataset.mobileSectionReady;
+            title.removeAttribute("role");
+            title.removeAttribute("tabindex");
+            title.removeAttribute("aria-expanded");
+            return;
+        }
+
+        if (!card.dataset.mobileSectionReady) {
+            card.classList.toggle("mobile-section-collapsed", shouldStartSectionCollapsed(card));
+            card.dataset.mobileSectionReady = "true";
+        }
+
+        title.setAttribute("role", "button");
+        title.setAttribute("tabindex", "0");
+        title.setAttribute("aria-expanded", String(!card.classList.contains("mobile-section-collapsed")));
+    });
+}
+
+function toggleMobileSection(card) {
+    if (!isMobileFormLayout()) return;
+
+    const title = card.querySelector(":scope > .section-card-title");
+    card.classList.toggle("mobile-section-collapsed");
+    title?.setAttribute("aria-expanded", String(!card.classList.contains("mobile-section-collapsed")));
+}
+
+function bindMobileSections() {
+    document.querySelectorAll(".tab-pane .section-card").forEach(card => {
+        const title = card.querySelector(":scope > .section-card-title");
+        if (!title || title.dataset.mobileSectionBound) return;
+
+        title.dataset.mobileSectionBound = "true";
+        title.addEventListener("click", () => toggleMobileSection(card));
+        title.addEventListener("keydown", event => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            toggleMobileSection(card);
+        });
+    });
+
+    updateMobileSections();
 }
 
 async function waitForImages(container) {
@@ -1583,8 +1877,7 @@ async function buildPdfDocument(options = {}) {
     return pdf;
 }
 
-async function downloadPdf() {
-    const button = document.getElementById("downloadPdfBtn");
+async function downloadPdf(button = document.getElementById("downloadPdfBtn")) {
     const restoreButton = setButtonLoading(button, "Membuat PDF...");
 
     try {
@@ -1592,20 +1885,25 @@ async function downloadPdf() {
         pdf.save(getPdfFileName());
     } catch (error) {
         console.error("Gagal membuat PDF.", error);
-        alert(error.message || "PDF gagal dibuat. Coba lagi setelah data dan gambar selesai dimuat.");
+        showToast(error.message || "PDF gagal dibuat. Coba lagi setelah data dan gambar selesai dimuat.", {
+            type: "error",
+            duration: 4600
+        });
     } finally {
         restoreButton();
     }
 }
 
-async function printPdf() {
-    const button = document.getElementById("printPdfBtn");
+async function printPdf(button = document.getElementById("printPdfBtn")) {
     const restoreButton = setButtonLoading(button, "Menyiapkan Print...");
     const printWindow = window.open("", "_blank");
 
     if (!printWindow) {
         restoreButton();
-        alert("Popup diblokir browser. Izinkan popup untuk mencetak PDF.");
+        showToast("Popup diblokir browser. Izinkan popup untuk mencetak PDF.", {
+            type: "warning",
+            duration: 4600
+        });
         return;
     }
 
@@ -1618,7 +1916,10 @@ async function printPdf() {
         if (!printWindow.closed) {
             printWindow.close();
         }
-        alert(error.message || "Print PDF gagal disiapkan. Coba lagi setelah data dan gambar selesai dimuat.");
+        showToast(error.message || "Print PDF gagal disiapkan. Coba lagi setelah data dan gambar selesai dimuat.", {
+            type: "error",
+            duration: 4600
+        });
     } finally {
         restoreButton();
     }
@@ -1649,12 +1950,20 @@ function init() {
     bindTabsAndSteps();
     bindTopActions();
     bindMobileActionMenu();
+    bindMobileAppActions();
+    bindMobileSections();
+    bindConfirmDialogEvents();
     bindDraftModalEvents();
+    setMobileActionMenuOpen(false);
     updatePreviewToggleButton();
     window.addEventListener("resize", () => {
         if (!isMobileActionMenuLayout()) {
             setMobileActionMenuOpen(false);
+            document.body.classList.remove("mobile-preview-mode");
+        } else {
+            setMobileActionMenuOpen(document.body.classList.contains("mobile-menu-open"));
         }
+        updateMobileSections();
         updatePreviewToggleButton();
         updatePreviewScale();
     });

@@ -394,9 +394,15 @@
 
                 <aside class="preview-panel">
                     <div class="preview-head">
-                        <h4>Preview</h4>
-                        <p>Preview mengikuti tab aktif. Periksa isi dokumen, total, ringkasan, dan tanda tangan sebelum
-                            print atau download.</p>
+                        <div>
+                            <h4>Preview</h4>
+                            <p>Preview mengikuti tab aktif. Periksa isi dokumen, total, ringkasan, dan tanda tangan sebelum
+                                print atau download.</p>
+                        </div>
+                        <button id="previewBackBtn" class="preview-back-btn" type="button">
+                            <i class="bi bi-chevron-left"></i>
+                            <span>Form</span>
+                        </button>
                     </div>
 
                     <div class="preview-scroll">
@@ -539,6 +545,33 @@
                 </aside>
             </div>
 
+            <nav class="mobile-actionbar" aria-label="Aksi utama">
+                <button id="mobilePreviewToggleBtn" class="mobile-actionbar-btn active" type="button">
+                    <i class="bi bi-layout-sidebar"></i>
+                    <span>Preview</span>
+                </button>
+                <button id="mobileSaveDraftBtn" class="mobile-actionbar-btn" type="button">
+                    <i class="bi bi-floppy"></i>
+                    <span>Save</span>
+                </button>
+                <button id="mobileLoadDraftBtn" class="mobile-actionbar-btn" type="button">
+                    <i class="bi bi-folder2-open"></i>
+                    <span>Load</span>
+                </button>
+                <button id="mobileResetBtn" class="mobile-actionbar-btn" type="button">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span>Reset</span>
+                </button>
+                <button id="mobilePrintPdfBtn" class="mobile-actionbar-btn" type="button">
+                    <i class="bi bi-printer"></i>
+                    <span>Print</span>
+                </button>
+                <button id="mobileDownloadPdfBtn" class="mobile-actionbar-btn" type="button">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    <span>PDF</span>
+                </button>
+            </nav>
+
             <footer class="app-footer">
                 <div>&copy; 2026 Travel Expense. All rights reserved. Developed by Wahyu.</div>
             </footer>
@@ -558,6 +591,26 @@
                 </button>
             </div>
             <div class="draft-list" id="draftListBody"></div>
+        </div>
+    </div>
+
+    <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+    <div class="confirm-dialog" id="confirmDialog" hidden role="dialog" aria-modal="true"
+        aria-labelledby="confirmDialogTitle" aria-describedby="confirmDialogMessage">
+        <div class="confirm-dialog-backdrop" id="confirmDialogBackdrop"></div>
+        <div class="confirm-dialog-panel">
+            <div class="confirm-dialog-icon">
+                <i id="confirmDialogIcon" class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="confirm-dialog-copy">
+                <div class="confirm-dialog-title" id="confirmDialogTitle">Konfirmasi</div>
+                <div class="confirm-dialog-message" id="confirmDialogMessage">Lanjutkan tindakan ini?</div>
+            </div>
+            <div class="confirm-dialog-actions">
+                <button id="confirmCancelBtn" class="mini-btn" type="button">Batal</button>
+                <button id="confirmAcceptBtn" class="mini-btn danger-btn" type="button">Lanjutkan</button>
+            </div>
         </div>
     </div>
 
