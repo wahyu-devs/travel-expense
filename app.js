@@ -1234,8 +1234,17 @@ function deleteCostRowByIndex(docType, idx) {
     renderPreview();
 }
 
-function deleteCostRow(buttonEl) {
-    deleteCostRowByIndex(buttonEl.dataset.costDoc, Number(buttonEl.dataset.rowIndex));
+async function deleteCostRow(docType, idx) {
+    const ok = await showConfirmDialog({
+        title: "Hapus Biaya?",
+        message: "Item biaya ini akan dihapus dari daftar.",
+        confirmLabel: "Hapus",
+        tone: "danger"
+    });
+    if (!ok) return;
+
+    deleteCostRowByIndex(docType, idx);
+    showToast("Biaya berhasil dihapus.", { type: "success" });
 }
 
 function getCostEditElements() {
@@ -1376,18 +1385,8 @@ async function deleteActiveCostEditRow() {
         closeCostEditSheet();
         return;
     }
-
-    const ok = await showConfirmDialog({
-        title: "Hapus Biaya?",
-        message: "Item biaya ini akan dihapus dari daftar.",
-        confirmLabel: "Hapus",
-        tone: "danger"
-    });
-    if (!ok) return;
-
     closeCostEditSheet();
-    deleteCostRowByIndex(docType, index);
-    showToast("Biaya berhasil dihapus.", { type: "success" });
+    await deleteCostRow(docType, index);
 }
 
 function bindCostEditorEvents() {
@@ -1427,7 +1426,7 @@ function bindCostEditorEvents() {
 
             const buttonEl = event.target.closest(".delete-row-btn");
             if (!buttonEl) return;
-            deleteCostRow(buttonEl);
+            deleteCostRow(buttonEl.dataset.costDoc, Number(buttonEl.dataset.rowIndex));
         });
     });
 }
