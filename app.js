@@ -24,8 +24,8 @@ const REALISASI_INFO_FIELDS = [
 const defaultCostRows = [];
 
 const defaultState = {
-    companyName: "PT. PERKOM INDAH MURNI",
-    realisasiCompanyName: "PT. PERKOM INDAH MURNI",
+    companyName: "PT. Perkom Indah Murni",
+    realisasiCompanyName: "PT. Perkom Indah Murni",
     docDate: "",
     realisasiDocDate: "",
     department: "",
@@ -774,6 +774,21 @@ function closeDraftModal() {
     document.body.classList.remove("draft-modal-open");
 }
 
+function openAboutModal() {
+    const modal = document.getElementById("aboutModal");
+    if (!modal) return;
+    modal.hidden = false;
+    document.body.classList.add("about-modal-open");
+    document.getElementById("aboutModalCloseBtn")?.focus();
+}
+
+function closeAboutModal() {
+    const modal = document.getElementById("aboutModal");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("about-modal-open");
+}
+
 function getToastIcon(type) {
     if (type === "success") return "bi-check-circle-fill";
     if (type === "error" || type === "danger") return "bi-exclamation-circle-fill";
@@ -931,6 +946,22 @@ function bindDraftModalEvents() {
     });
 }
 
+function bindAboutModalEvents() {
+    const modal = document.getElementById("aboutModal");
+    if (!modal || modal.dataset.bound === "true") return;
+    modal.dataset.bound = "true";
+
+    document.getElementById("aboutBtn")?.addEventListener("click", openAboutModal);
+    document.getElementById("aboutModalCloseBtn")?.addEventListener("click", closeAboutModal);
+    document.getElementById("aboutModalBackdrop")?.addEventListener("click", closeAboutModal);
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !modal.hidden) {
+            closeAboutModal();
+        }
+    });
+}
+
 function bindConfirmDialogEvents() {
     const dialog = document.getElementById("confirmDialog");
     if (!dialog || dialog.dataset.bound === "true") return;
@@ -961,11 +992,21 @@ function applyTheme(theme) {
         localStorage.setItem(THEME_KEY, nextTheme);
     } catch {
     }
+    updateThemeToggleButton();
+}
+
+function updateThemeToggleButton() {
     const btn = document.getElementById("themeToggleBtn");
     if (!btn) return;
-    btn.innerHTML = nextTheme === "dark"
-        ? `<i class="bi bi-moon-stars-fill"></i><span>Dark</span>`
-        : `<i class="bi bi-sun-fill"></i><span>Light</span>`;
+
+    const nextTheme = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+    const mobile = isMobileActionMenuLayout();
+    const icon = nextTheme === "dark" ? "bi-moon-stars-fill" : "bi-sun-fill";
+    const label = mobile
+        ? (nextTheme === "dark" ? "Dark Mode" : "Light Mode")
+        : (nextTheme === "dark" ? "Dark" : "Light");
+
+    btn.innerHTML = `<i class="bi ${icon}"></i><span>${label}</span>`;
 }
 
 function initTheme() {
@@ -2295,6 +2336,7 @@ function init() {
     bindConfirmDialogEvents();
     bindCostEditSheetEvents();
     bindDraftModalEvents();
+    bindAboutModalEvents();
     setMobileActionMenuOpen(false);
     updatePreviewToggleButton();
     window.addEventListener("resize", () => {
@@ -2305,6 +2347,7 @@ function init() {
             setMobileActionMenuOpen(document.body.classList.contains("mobile-menu-open"));
         }
         updateMobileSections();
+        updateThemeToggleButton();
         updatePreviewToggleButton();
         updatePreviewScale();
     });

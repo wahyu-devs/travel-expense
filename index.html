@@ -68,6 +68,11 @@
                         <i class="bi bi-file-earmark-pdf"></i>
                         <span>Download</span>
                     </button>
+
+                    <button id="aboutBtn" class="ghost-btn mobile-menu-only" type="button">
+                        <i class="bi bi-info-circle"></i>
+                        <span>About</span>
+                    </button>
                 </div>
             </div>
 
@@ -80,7 +85,7 @@
                                 <span class="step-no">1</span>
                                 <span class="step-label" data-mobile-label="Uang Muka">Uang Muka Perjalanan</span>
                             </div>
-                            <i class="bi bi-check-circle-fill step-check"></i>
+                            <span class="step-dot" aria-hidden="true"></span>
                         </button>
 
                         <button class="step-btn" id="tab-realisasi" data-pane-target="#pane-realisasi"
@@ -89,7 +94,7 @@
                                 <span class="step-no">2</span>
                                 <span class="step-label" data-mobile-label="Realisasi">Realisasi Biaya Perjalanan</span>
                             </div>
-                            <i class="bi bi-check-circle-fill step-check"></i>
+                            <span class="step-dot" aria-hidden="true"></span>
                         </button>
                     </div>
 
@@ -623,6 +628,31 @@
                 </button>
             </div>
             <div class="draft-list" id="draftListBody"></div>
+        </div>
+    </div>
+
+    <div class="about-modal" id="aboutModal" hidden role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle"
+        aria-describedby="aboutModalDesc">
+        <div class="about-modal-backdrop" id="aboutModalBackdrop"></div>
+        <div class="about-modal-panel">
+            <div class="about-modal-head">
+                <div class="about-brand">
+                    <div class="about-brand-mark" aria-hidden="true">
+                        <i class="bi bi-airplane-fill"></i>
+                    </div>
+                    <div class="about-brand-copy">
+                        <div class="about-modal-title" id="aboutModalTitle">Travel Expense</div>
+                        <div class="about-modal-desc" id="aboutModalDesc">v1.0 · by Wahyu</div>
+                    </div>
+                </div>
+                <button id="aboutModalCloseBtn" class="icon-btn" type="button" aria-label="Close about">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="about-modal-body">
+                <p class="about-lead">A web app for creating Travel Advance and Expense Report documents.</p>
+                <div class="about-note">All data is stored locally in your browser.</div>
+            </div>
         </div>
     </div>
 
