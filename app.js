@@ -71,7 +71,8 @@ const costEditorCollapsed = {
 };
 const activeCostEdit = {
     docType: null,
-    index: null
+    index: null,
+    isNew: false
 };
 
 function clone(obj) {
@@ -1028,6 +1029,7 @@ function syncRealisasiSummaryValues() {
     const receiptHasUsd = hasCurrencyValue(advanceCosts, "usd");
     const expenseHasUsd = hasCurrencyValue(realisasiCosts, "usd");
     const differenceHasUsd = receiptHasUsd || expenseHasUsd;
+    const hasUsdSummary = differenceHasUsd;
 
     const values = {
         receiptRpValue: { value: receiptTotals.rp },
@@ -1041,6 +1043,9 @@ function syncRealisasiSummaryValues() {
     Object.entries(values).forEach(([id, options]) => {
         setSummaryValue(id, options.value, { tone: options.tone });
     });
+
+    const summaryCard = document.getElementById("summaryRealisasiCard");
+    summaryCard?.classList.toggle("has-usd", hasUsdSummary);
 }
 
 function getCostEditorBodyId(docType) {
@@ -1210,21 +1215,51 @@ function getCostDocLabel(docType) {
     return docType === "realisasi" ? "Biaya Realisasi" : "Biaya Perjalanan";
 }
 
-function openCostEditSheet(docType, index) {
+function createBlankCostRow(type) {
+    return {
+        type: type === "sub" ? "sub" : "item",
+        description: type === "sub" ? "- " : "",
+        rp: "",
+        usd: ""
+    };
+}
+
+function openCostEditSheet(docType, index, options = {}) {
     const costs = getCosts(docType);
-    const row = costs[index];
     const elements = getCostEditElements();
-    if (!elements.sheet || !row) return;
+    const isNew = Boolean(options.create);
+    const row = isNew ? createBlankCostRow(options.type) : costs[index];
+    if (!elements.sheet || (!row && !isNew)) return;
 
     activeCostEdit.docType = docType;
-    activeCostEdit.index = index;
+    activeCostEdit.index = isNew ? null : index;
+    activeCostEdit.isNew = isNew;
 
     elements.kicker.textContent = getCostDocLabel(docType);
-    elements.title.textContent = `Edit ${row.type === "sub" ? "Sub-item" : "Item"} ${index + 1}`;
+    elements.title.textContent = isNew
+        ? `Tambah ${row.type === "sub" ? "Sub-item" : "Item"}`
+        : `Edit ${row.type === "sub" ? "Sub-item" : "Item"} ${index + 1}`;
     elements.type.value = row.type;
     elements.description.value = row.description || "";
     elements.rp.value = row.rp === "" ? "" : formatInputThousands(row.rp);
     elements.usd.value = row.usd === "" ? "" : formatInputThousands(row.usd);
+    const deleteButton = document.getElementById("costEditDeleteBtn");
+    if (deleteButton) {
+        deleteButton.hidden = false;
+        if (isNew) {
+            deleteButton.classList.remove("danger-btn");
+            deleteButton.innerHTML = `
+                <i class="bi bi-x-lg"></i>
+                <span>Cancel</span>
+            `;
+        } else {
+            deleteButton.classList.add("danger-btn");
+            deleteButton.innerHTML = `
+                <i class="bi bi-trash3"></i>
+                <span>Hapus</span>
+            `;
+        }
+    }
 
     elements.sheet.hidden = false;
     document.body.classList.add("cost-edit-open");
@@ -1236,18 +1271,27 @@ function closeCostEditSheet() {
     if (!sheet) return;
     sheet.hidden = true;
     document.body.classList.remove("cost-edit-open");
+    const deleteButton = document.getElementById("costEditDeleteBtn");
+    if (deleteButton) {
+        deleteButton.classList.add("danger-btn");
+        deleteButton.innerHTML = `
+            <i class="bi bi-trash3"></i>
+            <span>Hapus</span>
+        `;
+    }
     activeCostEdit.docType = null;
     activeCostEdit.index = null;
+    activeCostEdit.isNew = false;
 }
 
 function saveCostEditSheet() {
-    const { docType, index } = activeCostEdit;
+    const { docType, index, isNew } = activeCostEdit;
     const elements = getCostEditElements();
-    if (!docType || index === null) return;
+    if (!docType) return;
 
     const costs = getCosts(docType);
-    const row = costs[index];
-    if (!row) {
+    const row = isNew ? null : costs[index];
+    if (!isNew && !row) {
         closeCostEditSheet();
         return;
     }
@@ -1256,24 +1300,43 @@ function saveCostEditSheet() {
         state.realisasiManualEdit = true;
     }
 
-    row.type = elements.type.value === "sub" ? "sub" : "item";
-    row.description = elements.description.value;
-    row.rp = parseMaybeNumber(elements.rp.value);
-    row.usd = parseMaybeNumber(elements.usd.value);
+    const nextRow = {
+        type: elements.type.value === "sub" ? "sub" : "item",
+        description: elements.description.value,
+        rp: parseMaybeNumber(elements.rp.value),
+        usd: parseMaybeNumber(elements.usd.value)
+    };
+
+    if (isNew) {
+        costs.push(nextRow);
+    } else {
+        row.type = nextRow.type;
+        row.description = nextRow.description;
+        row.rp = nextRow.rp;
+        row.usd = nextRow.usd;
+    }
 
     if (docType === "ump") {
         syncRealisasiCostsFromAdvance();
     }
 
+    if (isNew) {
+        costEditorCollapsed[docType] = false;
+    }
+
     closeCostEditSheet();
     renderAllCostEditors();
     renderPreview();
-    showToast("Biaya berhasil diperbarui.", { type: "success" });
+    showToast(isNew ? "Biaya berhasil ditambahkan." : "Biaya berhasil diperbarui.", { type: "success" });
 }
 
 async function deleteActiveCostEditRow() {
-    const { docType, index } = activeCostEdit;
-    if (!docType || index === null) return;
+    const { docType, index, isNew } = activeCostEdit;
+    if (!docType) return;
+    if (isNew) {
+        closeCostEditSheet();
+        return;
+    }
 
     const ok = await showConfirmDialog({
         title: "Hapus Biaya?",
@@ -1354,16 +1417,16 @@ function bindCostEditSheetEvents() {
 }
 
 function addRow(docType, type) {
+    if (isMobileFormLayout()) {
+        openCostEditSheet(docType, -1, { create: true, type });
+        return;
+    }
+
     if (docType === "realisasi") {
         state.realisasiManualEdit = true;
     }
 
-    getCosts(docType).push({
-        type,
-        description: type === "sub" ? "- " : "",
-        rp: "",
-        usd: ""
-    });
+    getCosts(docType).push(createBlankCostRow(type));
 
     if (docType === "ump") {
         syncRealisasiCostsFromAdvance();
@@ -1372,10 +1435,6 @@ function addRow(docType, type) {
     costEditorCollapsed[docType] = false;
     renderAllCostEditors();
     renderPreview();
-
-    if (isMobileFormLayout()) {
-        openCostEditSheet(docType, getCosts(docType).length - 1);
-    }
 }
 
 function updateMiniSignaturePreview(key, value) {
