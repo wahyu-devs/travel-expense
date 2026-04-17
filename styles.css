@@ -473,10 +473,12 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 .summary-stat-value {
     display: block;
     color: var(--txt);
-    font-size: var(--fs-ui-lg);
+    font-size: var(--summary-font-size, var(--fs-ui-lg));
     font-weight: 800;
     line-height: 1.2;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .summary-stat-value.is-negative {
@@ -1471,6 +1473,29 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
     .step-note {
         display: none;
+    }
+
+    .summary-realisasi-grid {
+        gap: 6px;
+    }
+
+    .summary-stat {
+        padding: 7px 7px 8px;
+    }
+
+    .summary-stat-label {
+        font-size: 0.69rem;
+        margin-bottom: 4px;
+    }
+
+    .summary-stat-value {
+        line-height: 1.05;
+        letter-spacing: 0;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: normal;
     }
 
     .mobile-actionbar {

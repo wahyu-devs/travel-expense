@@ -1012,12 +1012,49 @@ function setSummaryValue(id, value, options = {}) {
 
     const hasValue = value !== "" && value !== null && value !== undefined;
     const numericValue = hasValue ? toNumber(value) : null;
-    el.textContent = hasValue ? formatNumber(value) : "-";
+    const formatted = hasValue ? formatNumber(value) : "-";
+    el.textContent = formatted;
 
     if (options.tone) {
         el.classList.toggle("is-negative", numericValue !== null && numericValue < 0);
         el.classList.toggle("is-positive", numericValue !== null && numericValue > 0);
     }
+}
+
+function getSummaryValueFontSize(text) {
+    const length = String(text || "").replace(/\s+/g, "").length;
+    if (!length) return "0.9rem";
+    if (length <= 6) return "0.95rem";
+    if (length <= 8) return "0.88rem";
+    if (length <= 10) return "0.8rem";
+    if (length <= 12) return "0.73rem";
+    if (length <= 14) return "0.68rem";
+    return "0.64rem";
+}
+
+function syncSummaryValueFontSizes() {
+    const ids = [
+        "receiptRpValue",
+        "totalExpenseRpValue",
+        "differenceRpValue",
+        "receiptUsdValue",
+        "totalExpenseUsdValue",
+        "differenceUsdValue"
+    ];
+    const values = ids
+        .map(id => document.getElementById(id)?.textContent || "")
+        .filter(value => value && value !== "-");
+    const longest = values.reduce((current, value) => (
+        String(value).replace(/\s+/g, "").length > String(current).replace(/\s+/g, "").length ? value : current
+    ), values[0] || "-");
+    const fontSize = getSummaryValueFontSize(longest);
+
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.setProperty("--summary-font-size", fontSize);
+        }
+    });
 }
 
 function syncRealisasiSummaryValues() {
@@ -1043,6 +1080,8 @@ function syncRealisasiSummaryValues() {
     Object.entries(values).forEach(([id, options]) => {
         setSummaryValue(id, options.value, { tone: options.tone });
     });
+
+    syncSummaryValueFontSizes();
 
     const summaryCard = document.getElementById("summaryRealisasiCard");
     summaryCard?.classList.toggle("has-usd", hasUsdSummary);
