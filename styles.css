@@ -539,6 +539,10 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     border-bottom: 0;
 }
 
+.mobile-cost-card-cell {
+    display: none;
+}
+
 .table-scroll {
     overflow-x: auto;
 }
@@ -1079,6 +1083,85 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     justify-content: flex-end;
     gap: 8px;
     margin-top: 16px;
+}
+
+.cost-edit-sheet[hidden] {
+    display: none;
+}
+
+.cost-edit-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 1320;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+}
+
+.cost-edit-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .64);
+}
+
+.cost-edit-panel {
+    position: relative;
+    width: min(460px, 100%);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--txt);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .38);
+    overflow: hidden;
+}
+
+.cost-edit-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.cost-edit-kicker {
+    color: var(--muted);
+    font-size: var(--fs-ui-xs);
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+}
+
+.cost-edit-title {
+    font-size: var(--fs-ui-2xl);
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.cost-edit-body {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+}
+
+.cost-edit-money-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.cost-edit-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 8px;
+    padding: 14px 16px 16px;
+    border-top: 1px solid var(--line);
+}
+
+.cost-edit-actions .mini-btn,
+.cost-edit-actions .primary-btn {
+    min-height: 44px;
 }
 
 .text-muted-small {
@@ -1726,11 +1809,11 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
     .cost-editor-table tr {
         display: block;
-        padding: 12px;
         margin-bottom: 10px;
-        border: 1px solid var(--line-soft);
-        border-radius: 8px;
-        background: var(--panel-2);
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
     }
 
     .cost-editor-table tr:last-child {
@@ -1751,6 +1834,14 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         border-bottom: 0;
     }
 
+    .cost-editor-table td:not(.mobile-cost-card-cell) {
+        display: none;
+    }
+
+    .cost-editor-table .mobile-cost-card-cell {
+        display: block;
+    }
+
     .cost-editor-table td + td {
         margin-top: 10px;
     }
@@ -1767,6 +1858,85 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
     .cost-editor-table td[data-label="Aksi"]::before {
         display: none;
+    }
+
+    .mobile-cost-card-cell::before {
+        display: none !important;
+    }
+
+    .mobile-cost-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 38px;
+        align-items: stretch;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .mobile-cost-edit-btn {
+        min-width: 0;
+        border: 1px solid var(--line-soft);
+        border-radius: 8px;
+        background: var(--panel-2);
+        color: var(--txt);
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .mobile-cost-edit-btn:active {
+        background: var(--chip);
+    }
+
+    .mobile-cost-type {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 42px;
+        min-height: 28px;
+        padding: 0 7px;
+        font-size: var(--fs-ui-2xs);
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .mobile-cost-main {
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+    }
+
+    .mobile-cost-title {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--fs-ui-sm);
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .mobile-cost-amounts {
+        min-width: 0;
+        color: var(--muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 8px;
+        font-size: var(--fs-ui-xs);
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .mobile-cost-delete-btn.delete-row-btn {
+        width: 38px;
+        min-height: 100%;
+        margin-top: 0;
+        padding: 0;
     }
 
     .row-type-badge {
@@ -1828,6 +1998,27 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
     .confirm-dialog-actions .mini-btn {
         min-height: 44px;
+    }
+
+    .cost-edit-sheet {
+        align-items: end;
+        padding: 12px;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .cost-edit-panel {
+        width: 100%;
+        max-height: calc(100dvh - 24px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .cost-edit-body {
+        overflow: auto;
+    }
+
+    .cost-edit-actions {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
 
     .draft-item {

@@ -614,6 +614,55 @@
         </div>
     </div>
 
+    <div class="cost-edit-sheet" id="costEditSheet" hidden role="dialog" aria-modal="true"
+        aria-labelledby="costEditSheetTitle">
+        <div class="cost-edit-backdrop" id="costEditBackdrop"></div>
+        <div class="cost-edit-panel">
+            <div class="cost-edit-head">
+                <div>
+                    <div class="cost-edit-kicker" id="costEditSheetKicker">Biaya</div>
+                    <div class="cost-edit-title" id="costEditSheetTitle">Edit Biaya</div>
+                </div>
+                <button id="costEditCloseBtn" class="icon-btn" type="button" aria-label="Tutup edit biaya">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="cost-edit-body">
+                <label class="form-label" for="costEditType">Tipe</label>
+                <select id="costEditType" class="form-select">
+                    <option value="item">Item</option>
+                    <option value="sub">Sub-item</option>
+                </select>
+
+                <label class="form-label" for="costEditDescription">Deskripsi</label>
+                <input id="costEditDescription" type="text" class="form-control" placeholder="Deskripsi biaya">
+
+                <div class="cost-edit-money-grid">
+                    <div>
+                        <label class="form-label" for="costEditRp">Rp</label>
+                        <input id="costEditRp" type="text" inputmode="numeric" class="form-control" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="form-label" for="costEditUsd">USD</label>
+                        <input id="costEditUsd" type="text" inputmode="numeric" class="form-control" placeholder="">
+                    </div>
+                </div>
+            </div>
+
+            <div class="cost-edit-actions">
+                <button id="costEditDeleteBtn" class="mini-btn danger-btn" type="button">
+                    <i class="bi bi-trash3"></i>
+                    <span>Hapus</span>
+                </button>
+                <button id="costEditSaveBtn" class="primary-btn" type="button">
+                    <i class="bi bi-check-lg"></i>
+                    <span>Simpan</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./app.js"></script>
 </body>

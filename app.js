@@ -69,6 +69,10 @@ const costEditorCollapsed = {
     ump: true,
     realisasi: true
 };
+const activeCostEdit = {
+    docType: null,
+    index: null
+};
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -1074,6 +1078,19 @@ function toggleCostEditorCollapse(docType) {
     updateCostCollapseState(docType);
 }
 
+function getCostRowTitle(row, index) {
+    const description = String(row.description || "").trim();
+    return description || `Biaya ${index + 1}`;
+}
+
+function getCostRowRpLabel(row) {
+    return row.rp === "" ? "Rp -" : `Rp ${formatNumber(row.rp)}`;
+}
+
+function getCostRowUsdLabel(row) {
+    return row.usd === "" ? "" : formatUsd(row.usd);
+}
+
 function renderCostEditor(docType) {
     const tbody = document.getElementById(getCostEditorBodyId(docType));
     const costs = getCosts(docType);
@@ -1083,6 +1100,24 @@ function renderCostEditor(docType) {
     costs.forEach((row, index) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
+          <td class="mobile-cost-card-cell" colspan="5">
+            <div class="mobile-cost-card">
+              <button class="mobile-cost-edit-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}">
+                <span class="mobile-cost-type">${row.type === "sub" ? "Sub" : "Item"}</span>
+                <span class="mobile-cost-main">
+                  <span class="mobile-cost-title">${escapeHtml(getCostRowTitle(row, index))}</span>
+                  <span class="mobile-cost-amounts">
+                    <span>${escapeHtml(getCostRowRpLabel(row))}</span>
+                    ${getCostRowUsdLabel(row) ? `<span>${escapeHtml(getCostRowUsdLabel(row))}</span>` : ""}
+                  </span>
+                </span>
+                <i class="bi bi-chevron-right"></i>
+              </button>
+              <button class="mini-btn delete-row-btn mobile-cost-delete-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" aria-label="Hapus biaya ${index + 1}">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </div>
+          </td>
           <td data-label="Tipe">
             <select class="form-select row-type-badge" data-cost-doc="${docType}" data-row-index="${index}" data-row-field="type">
               <option value="item" ${row.type === "item" ? "selected" : ""}>Item</option>
@@ -1140,10 +1175,7 @@ function updateCostRowField(fieldEl) {
     renderPreview();
 }
 
-function deleteCostRow(buttonEl) {
-    const docType = buttonEl.dataset.costDoc;
-    const idx = Number(buttonEl.dataset.rowIndex);
-
+function deleteCostRowByIndex(docType, idx) {
     if (docType === "realisasi") {
         state.realisasiManualEdit = true;
     }
@@ -1156,6 +1188,104 @@ function deleteCostRow(buttonEl) {
 
     renderAllCostEditors();
     renderPreview();
+}
+
+function deleteCostRow(buttonEl) {
+    deleteCostRowByIndex(buttonEl.dataset.costDoc, Number(buttonEl.dataset.rowIndex));
+}
+
+function getCostEditElements() {
+    return {
+        sheet: document.getElementById("costEditSheet"),
+        kicker: document.getElementById("costEditSheetKicker"),
+        title: document.getElementById("costEditSheetTitle"),
+        type: document.getElementById("costEditType"),
+        description: document.getElementById("costEditDescription"),
+        rp: document.getElementById("costEditRp"),
+        usd: document.getElementById("costEditUsd")
+    };
+}
+
+function getCostDocLabel(docType) {
+    return docType === "realisasi" ? "Biaya Realisasi" : "Biaya Perjalanan";
+}
+
+function openCostEditSheet(docType, index) {
+    const costs = getCosts(docType);
+    const row = costs[index];
+    const elements = getCostEditElements();
+    if (!elements.sheet || !row) return;
+
+    activeCostEdit.docType = docType;
+    activeCostEdit.index = index;
+
+    elements.kicker.textContent = getCostDocLabel(docType);
+    elements.title.textContent = `Edit ${row.type === "sub" ? "Sub-item" : "Item"} ${index + 1}`;
+    elements.type.value = row.type;
+    elements.description.value = row.description || "";
+    elements.rp.value = row.rp === "" ? "" : formatInputThousands(row.rp);
+    elements.usd.value = row.usd === "" ? "" : formatInputThousands(row.usd);
+
+    elements.sheet.hidden = false;
+    document.body.classList.add("cost-edit-open");
+    requestAnimationFrame(() => elements.description.focus());
+}
+
+function closeCostEditSheet() {
+    const sheet = document.getElementById("costEditSheet");
+    if (!sheet) return;
+    sheet.hidden = true;
+    document.body.classList.remove("cost-edit-open");
+    activeCostEdit.docType = null;
+    activeCostEdit.index = null;
+}
+
+function saveCostEditSheet() {
+    const { docType, index } = activeCostEdit;
+    const elements = getCostEditElements();
+    if (!docType || index === null) return;
+
+    const costs = getCosts(docType);
+    const row = costs[index];
+    if (!row) {
+        closeCostEditSheet();
+        return;
+    }
+
+    if (docType === "realisasi") {
+        state.realisasiManualEdit = true;
+    }
+
+    row.type = elements.type.value === "sub" ? "sub" : "item";
+    row.description = elements.description.value;
+    row.rp = parseMaybeNumber(elements.rp.value);
+    row.usd = parseMaybeNumber(elements.usd.value);
+
+    if (docType === "ump") {
+        syncRealisasiCostsFromAdvance();
+    }
+
+    closeCostEditSheet();
+    renderAllCostEditors();
+    renderPreview();
+    showToast("Biaya berhasil diperbarui.", { type: "success" });
+}
+
+async function deleteActiveCostEditRow() {
+    const { docType, index } = activeCostEdit;
+    if (!docType || index === null) return;
+
+    const ok = await showConfirmDialog({
+        title: "Hapus Biaya?",
+        message: "Item biaya ini akan dihapus dari daftar.",
+        confirmLabel: "Hapus",
+        tone: "danger"
+    });
+    if (!ok) return;
+
+    closeCostEditSheet();
+    deleteCostRowByIndex(docType, index);
+    showToast("Biaya berhasil dihapus.", { type: "success" });
 }
 
 function bindCostEditorEvents() {
@@ -1187,10 +1317,39 @@ function bindCostEditorEvents() {
         });
 
         tbody.addEventListener("click", event => {
+            const editButton = event.target.closest(".mobile-cost-edit-btn");
+            if (editButton) {
+                openCostEditSheet(editButton.dataset.costDoc, Number(editButton.dataset.rowIndex));
+                return;
+            }
+
             const buttonEl = event.target.closest(".delete-row-btn");
             if (!buttonEl) return;
             deleteCostRow(buttonEl);
         });
+    });
+}
+
+function bindCostEditSheetEvents() {
+    const sheet = document.getElementById("costEditSheet");
+    if (!sheet || sheet.dataset.bound === "true") return;
+    sheet.dataset.bound = "true";
+
+    document.getElementById("costEditCloseBtn")?.addEventListener("click", closeCostEditSheet);
+    document.getElementById("costEditBackdrop")?.addEventListener("click", closeCostEditSheet);
+    document.getElementById("costEditSaveBtn")?.addEventListener("click", saveCostEditSheet);
+    document.getElementById("costEditDeleteBtn")?.addEventListener("click", deleteActiveCostEditRow);
+
+    ["costEditRp", "costEditUsd"].forEach(id => {
+        document.getElementById(id)?.addEventListener("input", event => {
+            setFormattedAmountValue(event.target);
+        });
+    });
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !sheet.hidden) {
+            closeCostEditSheet();
+        }
     });
 }
 
@@ -1213,6 +1372,10 @@ function addRow(docType, type) {
     costEditorCollapsed[docType] = false;
     renderAllCostEditors();
     renderPreview();
+
+    if (isMobileFormLayout()) {
+        openCostEditSheet(docType, getCosts(docType).length - 1);
+    }
 }
 
 function updateMiniSignaturePreview(key, value) {
@@ -1953,6 +2116,7 @@ function init() {
     bindMobileAppActions();
     bindMobileSections();
     bindConfirmDialogEvents();
+    bindCostEditSheetEvents();
     bindDraftModalEvents();
     setMobileActionMenuOpen(false);
     updatePreviewToggleButton();
