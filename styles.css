@@ -1513,6 +1513,10 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         backdrop-filter: blur(14px);
     }
 
+    html[data-theme="light"] .step-list {
+        background: rgba(255, 255, 255, .94);
+    }
+
     .step-note {
         display: none;
     }
