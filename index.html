@@ -142,11 +142,27 @@
 
                                     <div class="col-md-6">
                                         <label class="form-label">Lama Project</label>
-                                        <input type="text" class="form-control sync-field" data-key="projectDuration">
+                                        <div class="duration-input-group">
+                                            <input id="projectDurationCount" type="number" min="1" step="1"
+                                                class="form-control sync-field" data-key="projectDurationCount"
+                                                inputmode="numeric" placeholder="0">
+                                            <select id="projectDurationUnit" class="form-select sync-field"
+                                                data-key="projectDurationUnit">
+                                                <option value="hari">Hari</option>
+                                                <option value="bulan">Bulan</option>
+                                                <option value="tahun">Tahun</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Pengajuan</label>
-                                        <input type="text" class="form-control sync-field" data-key="submissionPeriod">
+                                        <div class="submission-range-group">
+                                            <input type="date" class="form-control sync-field"
+                                                data-key="submissionStartDate">
+                                            <span class="submission-range-separator">s/d</span>
+                                            <input type="date" class="form-control sync-field"
+                                                data-key="submissionEndDate">
+                                        </div>
                                     </div>
 
                                     <div class="col-md-6">
@@ -299,11 +315,27 @@
 
                                     <div class="col-md-6">
                                         <label class="form-label">Lama Project</label>
-                                        <input type="text" class="form-control sync-field" data-key="realisasiProjectDuration">
+                                        <div class="duration-input-group">
+                                            <input id="realisasiProjectDurationCount" type="number" min="1" step="1"
+                                                class="form-control sync-field" data-key="realisasiProjectDurationCount"
+                                                inputmode="numeric" placeholder="0">
+                                            <select id="realisasiProjectDurationUnit" class="form-select sync-field"
+                                                data-key="realisasiProjectDurationUnit">
+                                                <option value="hari">Hari</option>
+                                                <option value="bulan">Bulan</option>
+                                                <option value="tahun">Tahun</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Pengajuan</label>
-                                        <input type="text" class="form-control sync-field" data-key="realisasiSubmissionPeriod">
+                                        <div class="submission-range-group">
+                                            <input type="date" class="form-control sync-field"
+                                                data-key="realisasiSubmissionStartDate">
+                                            <span class="submission-range-separator">s/d</span>
+                                            <input type="date" class="form-control sync-field"
+                                                data-key="realisasiSubmissionEndDate">
+                                        </div>
                                     </div>
 
                                     <div class="col-md-6">

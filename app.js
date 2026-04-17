@@ -13,8 +13,10 @@ const REALISASI_INFO_FIELDS = [
     { baseKey: "destination", realisasiKey: "realisasiDestination" },
     { baseKey: "purpose", realisasiKey: "realisasiPurpose" },
     { baseKey: "poNumber", realisasiKey: "realisasiPoNumber" },
-    { baseKey: "projectDuration", realisasiKey: "realisasiProjectDuration" },
-    { baseKey: "submissionPeriod", realisasiKey: "realisasiSubmissionPeriod" },
+    { baseKey: "projectDurationCount", realisasiKey: "realisasiProjectDurationCount" },
+    { baseKey: "projectDurationUnit", realisasiKey: "realisasiProjectDurationUnit" },
+    { baseKey: "submissionStartDate", realisasiKey: "realisasiSubmissionStartDate" },
+    { baseKey: "submissionEndDate", realisasiKey: "realisasiSubmissionEndDate" },
     { baseKey: "installerName", realisasiKey: "realisasiInstallerName" },
     { baseKey: "salesName", realisasiKey: "realisasiSalesName" }
 ];
@@ -34,8 +36,16 @@ const defaultState = {
     realisasiPurpose: "",
     poNumber: "",
     realisasiPoNumber: "",
+    projectDurationCount: "",
+    projectDurationUnit: "hari",
+    realisasiProjectDurationCount: "",
+    realisasiProjectDurationUnit: "hari",
     projectDuration: "",
     realisasiProjectDuration: "",
+    submissionStartDate: "",
+    submissionEndDate: "",
+    realisasiSubmissionStartDate: "",
+    realisasiSubmissionEndDate: "",
     submissionPeriod: "",
     realisasiSubmissionPeriod: "",
     installerName: "",
@@ -102,6 +112,49 @@ function updateSyncFieldValue(key, value) {
     document.querySelectorAll(`.sync-field[data-key="${key}"]`).forEach(el => {
         el.value = value ?? "";
     });
+}
+
+function formatDurationValue(count, unit) {
+    const safeCount = String(count ?? "").trim();
+    const safeUnit = unit === "bulan" || unit === "tahun" ? unit : "hari";
+    if (!safeCount) return "";
+    return `${safeCount} ${safeUnit}`;
+}
+
+function syncProjectDurationDisplay() {
+    state.projectDuration = formatDurationValue(state.projectDurationCount, state.projectDurationUnit);
+    state.realisasiProjectDuration = formatDurationValue(
+        state.realisasiProjectDurationCount,
+        state.realisasiProjectDurationUnit
+    );
+}
+
+function countInclusiveDays(startDate, endDate) {
+    if (!startDate || !endDate) return "";
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "";
+    const diff = Math.round((end.getTime() - start.getTime()) / 86400000);
+    if (diff < 0) return "";
+    return `${diff + 1}`;
+}
+
+function formatSubmissionPeriod(startDate, endDate) {
+    const start = startDate ? formatDateIndo(startDate) : "";
+    const end = endDate ? formatDateIndo(endDate) : "";
+    const dayCount = countInclusiveDays(startDate, endDate);
+    if (start && end) {
+        return dayCount ? `${dayCount} hari (${start} s/d ${end})` : `${start} s/d ${end}`;
+    }
+    return start || end || "";
+}
+
+function syncSubmissionPeriodDisplay() {
+    state.submissionPeriod = formatSubmissionPeriod(state.submissionStartDate, state.submissionEndDate);
+    state.realisasiSubmissionPeriod = formatSubmissionPeriod(
+        state.realisasiSubmissionStartDate,
+        state.realisasiSubmissionEndDate
+    );
 }
 
 function normalizeCostRows(rows, fallbackRows = []) {
@@ -179,8 +232,16 @@ function createResetState() {
         realisasiPurpose: "",
         poNumber: "",
         realisasiPoNumber: "",
+        projectDurationCount: "",
+        projectDurationUnit: "hari",
+        realisasiProjectDurationCount: "",
+        realisasiProjectDurationUnit: "hari",
         projectDuration: "",
         realisasiProjectDuration: "",
+        submissionStartDate: "",
+        submissionEndDate: "",
+        realisasiSubmissionStartDate: "",
+        realisasiSubmissionEndDate: "",
         submissionPeriod: "",
         realisasiSubmissionPeriod: "",
         installerName: "",
@@ -924,6 +985,8 @@ function fillStaticFields() {
         el.value = state[key] ?? "";
     });
 
+    syncProjectDurationDisplay();
+    syncSubmissionPeriodDisplay();
     document.querySelectorAll(".sync-checkbox").forEach(el => {
         const key = el.dataset.key;
         if (!key) return;
@@ -987,14 +1050,19 @@ function syncRealisasiInfoDefault(changedKey) {
 
 function bindStaticFields() {
     document.querySelectorAll(".sync-field").forEach(el => {
-        el.addEventListener("input", () => {
+        const handleSync = () => {
             const key = el.dataset.key;
             state[key] = el.value;
             syncRealisasiDateDefault(key);
             syncRealisasiInfoDefault(key);
+            syncProjectDurationDisplay();
+            syncSubmissionPeriodDisplay();
             syncMatchingFields(el);
             renderPreview();
-        });
+        };
+
+        el.addEventListener("input", handleSync);
+        el.addEventListener("change", handleSync);
     });
 
     document.querySelectorAll(".sync-checkbox").forEach(el => {
@@ -1548,6 +1616,18 @@ function getPreviewDocDate(docType = getActiveDocType()) {
 }
 
 function getPreviewInfoValue(docType, baseKey) {
+    if (baseKey === "projectDuration") {
+        return docType === "realisasi"
+            ? state.realisasiProjectDuration ?? ""
+            : state.projectDuration ?? "";
+    }
+
+    if (baseKey === "submissionPeriod") {
+        return docType === "realisasi"
+            ? state.realisasiSubmissionPeriod ?? ""
+            : state.submissionPeriod ?? "";
+    }
+
     if (docType !== "realisasi") {
         return state[baseKey] ?? "";
     }
