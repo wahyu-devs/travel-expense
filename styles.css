@@ -1208,7 +1208,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 .toast-region {
     position: fixed;
     left: 50%;
-    bottom: 20px;
+    top: 20px;
     z-index: 1400;
     width: min(420px, calc(100vw - 24px));
     display: grid;
@@ -2321,6 +2321,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     }
 
     .toast-region {
+        top: auto;
         bottom: calc(82px + env(safe-area-inset-bottom, 0px));
     }
 
