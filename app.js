@@ -1196,6 +1196,29 @@ function syncRealisasiSummaryValues() {
     summaryCard?.classList.toggle("has-usd", hasUsdSummary);
 }
 
+function syncCostSectionTotal(docType) {
+    const prefix = docType === "realisasi" ? "realisasi" : "ump";
+    const costs = getCosts(docType);
+    const totals = calcCostTotals(costs);
+    const hasUsd = hasCurrencyValue(costs, "usd");
+    const rpEl = document.getElementById(`${prefix}TotalBiayaRp`);
+    const usdEl = document.getElementById(`${prefix}TotalBiayaUsd`);
+
+    if (rpEl) {
+        rpEl.textContent = `Rp ${formatNumber(totals.rp) || "0"}`;
+    }
+
+    if (usdEl) {
+        usdEl.textContent = formatUsd(totals.usd) || "$ 0";
+        usdEl.hidden = !hasUsd;
+    }
+}
+
+function syncCostSectionTotals() {
+    syncCostSectionTotal("ump");
+    syncCostSectionTotal("realisasi");
+}
+
 function getCostEditorBodyId(docType) {
     return docType === "realisasi" ? "realisasiCostEditorBody" : "costEditorBody";
 }
@@ -1209,21 +1232,18 @@ function updateCostCollapseState(docType) {
     const button = document.getElementById(getCostCollapseButtonId(docType));
     const wrap = tbody?.closest(".cost-editor-wrap");
     const costs = getCosts(docType);
-    const canCollapse = costs.length > 1;
+    const section = wrap?.closest(".cost-section");
 
     if (!button || !wrap) return;
 
-    button.hidden = !canCollapse;
-    if (!canCollapse) {
-        costEditorCollapsed[docType] = true;
-    }
-
-    const collapsed = canCollapse && costEditorCollapsed[docType];
+    button.hidden = false;
+    const collapsed = costEditorCollapsed[docType];
+    section?.classList.toggle("cost-collapsed", collapsed);
     wrap.classList.toggle("cost-collapsed", collapsed);
     button.setAttribute("aria-expanded", String(!collapsed));
     button.innerHTML = collapsed
-        ? `<i class="bi bi-chevron-down"></i><span>Lihat semua (${costs.length})</span>`
-        : `<i class="bi bi-chevron-up"></i><span>Ringkas</span>`;
+        ? `<i class="bi bi-chevron-down"></i><span>Lihat rincian (${costs.length})</span>`
+        : `<i class="bi bi-chevron-up"></i><span>Sembunyikan</span>`;
 }
 
 function toggleCostEditorCollapse(docType) {
@@ -1773,6 +1793,8 @@ function renderPreview() {
     setSignImage("pvPreparedSign", state.preparedSign);
     setSignImage("pvCheckedSign", state.checkedSign);
     setSignImage("pvApprovedSign", state.approvedSign);
+
+    syncCostSectionTotals();
 
     setText("pvReceiptRp", formatNumber(receiptTotals.rp));
     setText("pvReceiptUsd", receiptHasUsd ? formatUsd(receiptTotals.usd) : "");

@@ -181,7 +181,7 @@
                                 </div>
                             </div>
 
-                            <div class="section-card">
+                            <div class="section-card cost-section">
                                 <div class="section-card-title">Biaya Perjalanan</div>
                                 <div class="section-card-desc">Masukkan biaya pengajuan. Totalnya digunakan sebagai
                                     receipt pada tab Realisasi.</div>
@@ -194,6 +194,13 @@
                                         <button id="addSubRowBtn" class="mini-btn" type="button">
                                             <i class="bi bi-plus-lg"></i> Tambah sub-item
                                         </button>
+                                    </div>
+                                    <div class="cost-total-summary" aria-label="Total Biaya Perjalanan">
+                                        <span class="cost-total-label">Total Biaya</span>
+                                        <span class="cost-total-values">
+                                            <span class="cost-total-amount" id="umpTotalBiayaRp">Rp 0</span>
+                                            <span class="cost-total-amount" id="umpTotalBiayaUsd" hidden>$ 0</span>
+                                        </span>
                                     </div>
                                 </div>
 
@@ -354,7 +361,7 @@
                                 </div>
                             </div>
 
-                            <div class="section-card">
+                            <div class="section-card cost-section">
                                 <div class="section-card-title">Biaya Realisasi</div>
                                 <div class="section-card-desc">Masukkan biaya aktual. Data ini digunakan untuk preview,
                                     total expense, dan selisih.</div>
@@ -367,6 +374,13 @@
                                         <button id="addRealisasiSubRowBtn" class="mini-btn" type="button">
                                             <i class="bi bi-plus-lg"></i> Tambah sub-item
                                         </button>
+                                    </div>
+                                    <div class="cost-total-summary" aria-label="Total Biaya Realisasi">
+                                        <span class="cost-total-label">Total Biaya</span>
+                                        <span class="cost-total-values">
+                                            <span class="cost-total-amount" id="realisasiTotalBiayaRp">Rp 0</span>
+                                            <span class="cost-total-amount" id="realisasiTotalBiayaUsd" hidden>$ 0</span>
+                                        </span>
                                     </div>
                                 </div>
 

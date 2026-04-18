@@ -498,6 +498,43 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     flex-wrap: wrap;
 }
 
+.cost-total-summary {
+    min-width: 0;
+    min-height: 34px;
+    margin-left: auto;
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    background: var(--panel-2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 9px;
+}
+
+.cost-total-label {
+    color: var(--muted);
+    font-size: var(--fs-ui-xs);
+    font-weight: 800;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+.cost-total-values {
+    min-width: 0;
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+}
+
+.cost-total-amount {
+    color: var(--txt);
+    font-size: var(--fs-ui-sm);
+    font-weight: 800;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
 .cost-collapse-btn {
     display: none;
 }
@@ -2050,6 +2087,16 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         justify-content: center;
         gap: 6px;
         margin-top: 8px;
+    }
+
+    .cost-total-summary {
+        width: 100%;
+        margin-left: 0;
+        justify-content: space-between;
+    }
+
+    .cost-section.cost-collapsed .table-scroll {
+        display: none;
     }
 
     .table-scroll {
