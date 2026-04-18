@@ -203,6 +203,25 @@ html[data-theme="light"] .primary-btn {
     color: #fff;
 }
 
+@media (min-width: 1024px) {
+    .topbar-right {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .topbar-action-group {
+        display: contents;
+    }
+
+    .topbar-action-group + .topbar-action-group {
+        border-left: 0;
+        padding-left: 0;
+    }
+}
+
 .main-grid {
     display: grid;
     grid-template-columns: 18rem minmax(0, 1fr) minmax(0, 1fr);
@@ -1515,6 +1534,15 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
     }
 
+    .topbar-action-group {
+        display: contents;
+    }
+
+    .topbar-action-group + .topbar-action-group {
+        border-left: 0;
+        padding-left: 0;
+    }
+
     body.cost-edit-open,
     body.confirm-dialog-open,
     body.about-modal-open,
@@ -1550,7 +1578,8 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         text-align: left;
     }
 
-    .topbar-right > button:not(.mobile-menu-only):not(#themeToggleBtn) {
+    .topbar-right .ghost-btn:not(.mobile-menu-only):not(#themeToggleBtn),
+    .topbar-right .primary-btn {
         display: none;
     }
 

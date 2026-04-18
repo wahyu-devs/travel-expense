@@ -33,46 +33,54 @@
                     <i class="bi bi-list"></i>
                 </button>
 
-                <div id="topbarActions" class="topbar-right d-flex align-items-center gap-2 flex-wrap">
-                    <button id="togglePreviewBtn" class="ghost-btn" type="button">
-                        <i class="bi bi-layout-sidebar-inset-reverse"></i>
-                        <span>Hide Preview</span>
-                    </button>
+                <div id="topbarActions" class="topbar-right">
+                    <div class="topbar-action-group" aria-label="Tampilan">
+                        <button id="togglePreviewBtn" class="ghost-btn" type="button">
+                            <i class="bi bi-layout-sidebar-inset-reverse"></i>
+                            <span>Hide Preview</span>
+                        </button>
 
-                    <button id="themeToggleBtn" class="ghost-btn" type="button">
-                        <i class="bi bi-moon-stars-fill"></i>
-                        <span>Dark</span>
-                    </button>
+                        <button id="themeToggleBtn" class="ghost-btn" type="button">
+                            <i class="bi bi-moon-stars-fill"></i>
+                            <span>Dark</span>
+                        </button>
+                    </div>
 
-                    <button id="saveDraftBtn" class="ghost-btn" type="button">
-                        <i class="bi bi-floppy"></i>
-                        <span>Save</span>
-                    </button>
+                    <div class="topbar-action-group" aria-label="Draft">
+                        <button id="saveDraftBtn" class="ghost-btn" type="button">
+                            <i class="bi bi-floppy"></i>
+                            <span>Save</span>
+                        </button>
 
-                    <button id="loadDraftBtn" class="ghost-btn" type="button">
-                        <i class="bi bi-folder2-open"></i>
-                        <span>Load</span>
-                    </button>
+                        <button id="loadDraftBtn" class="ghost-btn" type="button">
+                            <i class="bi bi-folder2-open"></i>
+                            <span>Load</span>
+                        </button>
+                    </div>
 
-                    <button id="resetBtn" class="ghost-btn" type="button">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                        <span>Reset</span>
-                    </button>
+                    <div class="topbar-action-group topbar-action-group-risk" aria-label="Reset">
+                        <button id="resetBtn" class="ghost-btn" type="button">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                            <span>Reset</span>
+                        </button>
 
-                    <button id="printPdfBtn" class="primary-btn" type="button">
-                        <i class="bi bi-printer"></i>
-                        <span>Print</span>
-                    </button>
+                        <button id="aboutBtn" class="ghost-btn mobile-menu-only" type="button">
+                            <i class="bi bi-info-circle"></i>
+                            <span>About</span>
+                        </button>
+                    </div>
 
-                    <button id="downloadPdfBtn" class="primary-btn" type="button">
-                        <i class="bi bi-file-earmark-pdf"></i>
-                        <span>Download</span>
-                    </button>
+                    <div class="topbar-action-group" aria-label="Output">
+                        <button id="printPdfBtn" class="ghost-btn" type="button">
+                            <i class="bi bi-printer"></i>
+                            <span>Print</span>
+                        </button>
 
-                    <button id="aboutBtn" class="ghost-btn mobile-menu-only" type="button">
-                        <i class="bi bi-info-circle"></i>
-                        <span>About</span>
-                    </button>
+                        <button id="downloadPdfBtn" class="primary-btn" type="button">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            <span>Download</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -569,7 +577,7 @@
                                         <div class="doc-sign-image-wrap">
                                             <img id="pvPreparedSign" class="doc-sign-image" alt="Prepared Signature">
                                         </div>
-                                        <div class="doc-sign-name" id="pvPreparedBy">( )</div>
+                                        <div class="doc-sign-name" id="pvPreparedBy"></div>
                                     </div>
 
                                     <div>
@@ -577,7 +585,7 @@
                                         <div class="doc-sign-image-wrap">
                                             <img id="pvCheckedSign" class="doc-sign-image" alt="Checked Signature">
                                         </div>
-                                        <div class="doc-sign-name" id="pvCheckedBy">( )</div>
+                                        <div class="doc-sign-name" id="pvCheckedBy"></div>
                                     </div>
 
                                     <div>
@@ -585,7 +593,7 @@
                                         <div class="doc-sign-image-wrap">
                                             <img id="pvApprovedSign" class="doc-sign-image" alt="Approved Signature">
                                         </div>
-                                        <div class="doc-sign-name" id="pvApprovedBy">( )</div>
+                                        <div class="doc-sign-name" id="pvApprovedBy"></div>
                                     </div>
                                 </div>
 

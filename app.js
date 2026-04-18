@@ -1786,9 +1786,9 @@ function renderPreview() {
     setText("pvGrandTotalUsd", activeHasUsd ? formatUsd(activeTotals.usd) : "");
     setText("pvNote", state.noteText);
 
-    setText("pvPreparedBy", `( ${state.preparedBy || ""} )`);
-    setText("pvCheckedBy", `( ${state.checkedBy || ""} )`);
-    setText("pvApprovedBy", `( ${state.approvedBy || ""} )`);
+    setText("pvPreparedBy", state.preparedBy || "");
+    setText("pvCheckedBy", state.checkedBy || "");
+    setText("pvApprovedBy", state.approvedBy || "");
 
     setSignImage("pvPreparedSign", state.preparedSign);
     setSignImage("pvCheckedSign", state.checkedSign);
