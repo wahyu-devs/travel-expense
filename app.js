@@ -84,6 +84,10 @@ const activeCostEdit = {
     index: null,
     isNew: false
 };
+const PDF_TABLE_LINE_WIDTH = 0.2;
+const PDF_TABLE_LINE_COLOR = 28;
+const PDF_SIGNATURE_IMAGE_MAX_WIDTH = 900;
+const PDF_SIGNATURE_IMAGE_MAX_HEIGHT = 324;
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -2124,114 +2128,542 @@ function bindMobileSections() {
     updateMobileSections();
 }
 
-async function waitForImages(container) {
-    const images = Array.from(container.querySelectorAll("img"))
-        .filter(img => img.getAttribute("src"));
-
-    await Promise.all(images.map(img => {
-        if (img.complete) {
-            return Promise.resolve();
-        }
-
-        return new Promise(resolve => {
-            const done = () => {
-                img.removeEventListener("load", done);
-                img.removeEventListener("error", done);
-                resolve();
-            };
-
-            img.addEventListener("load", done, { once: true });
-            img.addEventListener("error", done, { once: true });
-        });
-    }));
-}
-
-async function createPdfCanvas() {
-    const source = document.getElementById("previewDocument");
-    const clone = source.cloneNode(true);
-    clone.style.boxShadow = "none";
-    clone.style.margin = "0";
-
-    const holder = document.createElement("div");
-    holder.style.position = "fixed";
-    holder.style.left = "-99999px";
-    holder.style.top = "0";
-    holder.style.width = "794px";
-    holder.style.background = "#fff";
-    holder.style.zIndex = "-1";
-    holder.appendChild(clone);
-    document.body.appendChild(holder);
-
-    try {
-        await waitForImages(clone);
-
-        return await html2canvas(clone, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: "#ffffff"
-        });
-    } finally {
-        document.body.removeChild(holder);
-    }
-}
-
-function trimCanvasBottomWhitespace(canvas) {
-    const context = canvas.getContext("2d");
-    if (!context) return canvas;
-
-    const { width, height } = canvas;
-    const { data } = context.getImageData(0, 0, width, height);
-    let lastContentRow = height - 1;
-
-    for (; lastContentRow >= 0; lastContentRow -= 1) {
-        const rowOffset = lastContentRow * width * 4;
-        let hasContent = false;
-
-        for (let x = 0; x < width; x += 1) {
-            const pixelOffset = rowOffset + x * 4;
-            const r = data[pixelOffset];
-            const g = data[pixelOffset + 1];
-            const b = data[pixelOffset + 2];
-            const a = data[pixelOffset + 3];
-
-            if (a > 0 && (r < 250 || g < 250 || b < 250)) {
-                hasContent = true;
-                break;
-            }
-        }
-
-        if (hasContent) break;
-    }
-
-    if (lastContentRow >= height - 1) return canvas;
-
-    const trimmedHeight = Math.max(lastContentRow + 1, 1);
-    const trimmedCanvas = document.createElement("canvas");
-    trimmedCanvas.width = width;
-    trimmedCanvas.height = trimmedHeight;
-
-    const trimmedContext = trimmedCanvas.getContext("2d");
-    if (!trimmedContext) return canvas;
-
-    trimmedContext.drawImage(
-        canvas,
-        0,
-        0,
-        width,
-        trimmedHeight,
-        0,
-        0,
-        width,
-        trimmedHeight
-    );
-
-    return trimmedCanvas;
-}
-
 function getPdfFileName() {
     return getActiveDocType() === "realisasi"
         ? "realisasi-biaya-perjalanan.pdf"
         : "uang-muka-perjalanan.pdf";
+}
+
+const VECTOR_PDF = {
+    pageWidth: 210,
+    pageHeight: 297,
+    marginX: 9,
+    marginTop: 7,
+    marginBottom: 8,
+    docWidth: 192,
+    pxToMm: 210 / 794,
+    lineWidth: PDF_TABLE_LINE_WIDTH,
+    tableLineColor: PDF_TABLE_LINE_COLOR,
+    textColor: 17
+};
+
+function pxToPdfMm(px) {
+    return px * VECTOR_PDF.pxToMm;
+}
+
+function pdfFontHeight(fontSize, lineHeight = 1.25) {
+    return fontSize * 0.352778 * lineHeight;
+}
+
+function setPdfFont(pdf, size, style = "normal", color = VECTOR_PDF.textColor) {
+    pdf.setFont("helvetica", style);
+    pdf.setFontSize(size);
+    pdf.setTextColor(color, color, color);
+}
+
+function splitPdfText(pdf, value, width) {
+    const text = String(value ?? "");
+    return pdf.splitTextToSize(text || " ", Math.max(width, 1));
+}
+
+function drawPdfTextLines(pdf, lines, x, y, options = {}) {
+    const {
+        lineHeight = pdfFontHeight(pdf.getFontSize()),
+        align = "left",
+        maxWidth
+    } = options;
+
+    lines.forEach((line, index) => {
+        pdf.text(line, x, y + index * lineHeight, {
+            align,
+            baseline: "top",
+            maxWidth
+        });
+    });
+
+    return y + lines.length * lineHeight;
+}
+
+function drawPdfCenteredLines(pdf, lines, x, y, width, height, options = {}) {
+    const lineHeight = options.lineHeight ?? pdfFontHeight(pdf.getFontSize(), 1.18);
+    const totalTextHeight = lines.length * lineHeight;
+    const startY = y + Math.max((height - totalTextHeight) / 2, 0);
+
+    drawPdfTextLines(pdf, lines, x + width / 2, startY, {
+        lineHeight,
+        align: "center"
+    });
+}
+
+function drawPdfRightText(pdf, text, x, y, options = {}) {
+    pdf.text(String(text ?? ""), x, y, {
+        align: "right",
+        baseline: "top",
+        maxWidth: options.maxWidth
+    });
+}
+
+function addVectorPdfPage(pdf, cursor) {
+    pdf.addPage();
+    cursor.y = VECTOR_PDF.marginTop;
+}
+
+function ensureVectorPdfSpace(pdf, cursor, neededHeight) {
+    if (cursor.y + neededHeight <= VECTOR_PDF.pageHeight - VECTOR_PDF.marginBottom) {
+        return false;
+    }
+
+    addVectorPdfPage(pdf, cursor);
+    return true;
+}
+
+function getVectorPdfData(docType = getActiveDocType()) {
+    const activeCosts = getCosts(docType);
+    const advanceCosts = getCosts("ump");
+    const realisasiCosts = getCosts("realisasi");
+    const activeTotals = calcCostTotals(activeCosts);
+    const receiptTotals = getAdvanceTotals();
+    const expenseTotals = getRealisasiTotals();
+    const differenceTotals = getDifferenceTotals();
+    const activeHasUsd = hasCurrencyValue(activeCosts, "usd");
+    const receiptHasUsd = hasCurrencyValue(advanceCosts, "usd");
+    const expenseHasUsd = hasCurrencyValue(realisasiCosts, "usd");
+    const differenceHasUsd = receiptHasUsd || expenseHasUsd;
+    const previewDocDate = getPreviewDocDate(docType);
+
+    return {
+        docType,
+        companyName: getPreviewInfoValue(docType, "companyName"),
+        dateText: previewDocDate ? `Tanggal ${formatDateIndo(previewDocDate)}` : "Tanggal",
+        title: docType === "realisasi" ? "BIAYA PERJALANAN" : "UANG MUKA PERJALANAN",
+        infoRows: [
+            ["DEPARTEMEN", getPreviewInfoValue(docType, "department")],
+            ["TUJUAN", getPreviewInfoValue(docType, "destination")],
+            ["KEPERLUAN", getPreviewInfoValue(docType, "purpose")],
+            ["NO. PO", getPreviewInfoValue(docType, "poNumber")],
+            ["LAMA PROJECT", getPreviewInfoValue(docType, "projectDuration")],
+            ["PENGAJUAN", getPreviewInfoValue(docType, "submissionPeriod")],
+            ["NAMA INSTALLER/ENGINEER", getPreviewInfoValue(docType, "installerName")],
+            ["NAMA SALES", getPreviewInfoValue(docType, "salesName")]
+        ],
+        costs: activeCosts,
+        activeTotals,
+        activeHasUsd,
+        noteText: state.noteText,
+        signatures: [
+            { role: "PREPARED BY :", name: state.preparedBy || "", image: state.preparedSign },
+            { role: "CHECKED BY :", name: state.checkedBy || "", image: state.checkedSign },
+            { role: "APPROVED BY :", name: state.approvedBy || "", image: state.approvedSign }
+        ],
+        summary: {
+            receiptRp: formatNumber(receiptTotals.rp),
+            receiptUsd: receiptHasUsd ? formatUsd(receiptTotals.usd) : "",
+            totalExpenseRp: formatNumber(expenseTotals.rp),
+            totalExpenseUsd: expenseHasUsd ? formatUsd(expenseTotals.usd) : "",
+            differenceRp: formatNumber(differenceTotals.rp),
+            differenceUsd: differenceHasUsd ? formatUsd(differenceTotals.usd) : ""
+        }
+    };
+}
+
+function drawVectorPdfHeader(pdf, data, cursor) {
+    const x = VECTOR_PDF.marginX;
+    const y = VECTOR_PDF.marginTop;
+
+    setPdfFont(pdf, 15, "bold");
+    pdf.text(String(data.companyName || "").toUpperCase(), x, y, { baseline: "top" });
+
+    setPdfFont(pdf, 10.5);
+    drawPdfRightText(pdf, data.dateText, VECTOR_PDF.pageWidth - VECTOR_PDF.marginX, y + pxToPdfMm(18));
+
+    cursor.y = y + pxToPdfMm(74);
+
+    setPdfFont(pdf, 13.5, "bold");
+    pdf.text(data.title, VECTOR_PDF.pageWidth / 2, cursor.y, {
+        align: "center",
+        baseline: "top"
+    });
+    cursor.y += pdfFontHeight(13.5, 1.15) + pxToPdfMm(18);
+}
+
+function drawVectorPdfInfoRows(pdf, data, cursor) {
+    const x = VECTOR_PDF.marginX;
+    const labelWidth = pxToPdfMm(195);
+    const colonWidth = pxToPdfMm(16);
+    const valueX = x + labelWidth + colonWidth;
+    const valueWidth = VECTOR_PDF.docWidth - labelWidth - colonWidth;
+    const rowMinHeight = pxToPdfMm(18);
+    const lineHeight = pdfFontHeight(9.75, 1.18);
+
+    data.infoRows.forEach(([label, value]) => {
+        setPdfFont(pdf, 9.75);
+        const valueLines = splitPdfText(pdf, value, valueWidth);
+        const rowHeight = Math.max(rowMinHeight, valueLines.length * lineHeight);
+        ensureVectorPdfSpace(pdf, cursor, rowHeight);
+
+        setPdfFont(pdf, 9.75, "bold");
+        pdf.text(label, x, cursor.y, { baseline: "top" });
+        pdf.text(":", x + labelWidth + colonWidth / 2, cursor.y, {
+            align: "center",
+            baseline: "top"
+        });
+
+        setPdfFont(pdf, 9.75);
+        drawPdfTextLines(pdf, valueLines, valueX, cursor.y, { lineHeight, maxWidth: valueWidth });
+        cursor.y += rowHeight;
+    });
+
+    cursor.y += pxToPdfMm(10);
+}
+
+function setVectorPdfTableLineStyle(pdf) {
+    pdf.setDrawColor(
+        VECTOR_PDF.tableLineColor,
+        VECTOR_PDF.tableLineColor,
+        VECTOR_PDF.tableLineColor
+    );
+    pdf.setLineWidth(VECTOR_PDF.lineWidth);
+    if (typeof pdf.setLineCap === "function") {
+        pdf.setLineCap("butt");
+    }
+}
+
+function drawVectorPdfTableFrame(pdf, y, height, boundaries, drawTop = false) {
+    setVectorPdfTableLineStyle(pdf);
+
+    if (drawTop) {
+        pdf.line(boundaries[0], y, boundaries[boundaries.length - 1], y);
+    }
+    pdf.line(boundaries[0], y + height, boundaries[boundaries.length - 1], y + height);
+
+    boundaries.forEach(x => {
+        pdf.line(x, y, x, y + height);
+    });
+}
+
+function drawVectorPdfCostHeader(pdf, cursor, columns, drawTop = true) {
+    const headerHeight = 13;
+    ensureVectorPdfSpace(pdf, cursor, headerHeight);
+
+    drawVectorPdfTableFrame(pdf, cursor.y, headerHeight, columns.boundaries, drawTop);
+
+    setPdfFont(pdf, 9.75, "bold");
+    drawPdfCenteredLines(pdf, ["NO."], columns.x, cursor.y, columns.no, headerHeight);
+    drawPdfCenteredLines(pdf, ["DESCRIPTION"], columns.x + columns.no, cursor.y, columns.desc, headerHeight);
+    drawPdfCenteredLines(pdf, ["AMOUNT", "Rp."], columns.rpX, cursor.y, columns.rp, headerHeight);
+    drawPdfCenteredLines(pdf, ["AMOUNT", "USD"], columns.usdX, cursor.y, columns.usd, headerHeight);
+
+    cursor.y += headerHeight;
+}
+
+function getVectorPdfCostColumns() {
+    const x = VECTOR_PDF.marginX;
+    const no = pxToPdfMm(34);
+    const rp = pxToPdfMm(132);
+    const usd = pxToPdfMm(132);
+    const desc = VECTOR_PDF.docWidth - no - rp - usd;
+    const rpX = x + no + desc;
+    const usdX = rpX + rp;
+
+    return {
+        x,
+        no,
+        desc,
+        rp,
+        usd,
+        rpX,
+        usdX,
+        boundaries: [x, x + no, x + no + desc, usdX, x + VECTOR_PDF.docWidth],
+        footerBoundaries: [x, rpX, usdX, x + VECTOR_PDF.docWidth]
+    };
+}
+
+function drawVectorPdfCostTable(pdf, data, cursor) {
+    const columns = getVectorPdfCostColumns();
+    const bodyLineHeight = pdfFontHeight(9.75, 1.18);
+    const minRowHeight = 6.2;
+    const bodyPadX = 1.4;
+    let itemNo = 0;
+
+    cursor.y += pxToPdfMm(8);
+    drawVectorPdfCostHeader(pdf, cursor, columns, true);
+
+    data.costs.forEach(row => {
+        const isItem = row.type === "item";
+        if (isItem) itemNo += 1;
+
+        setPdfFont(pdf, 9.75);
+        const descLines = splitPdfText(pdf, row.description || "", columns.desc - bodyPadX * 2);
+        const rowHeight = Math.max(minRowHeight, descLines.length * bodyLineHeight + 2.4);
+
+        if (cursor.y + rowHeight > VECTOR_PDF.pageHeight - VECTOR_PDF.marginBottom) {
+            addVectorPdfPage(pdf, cursor);
+            drawVectorPdfCostHeader(pdf, cursor, columns, true);
+        }
+
+        drawVectorPdfTableFrame(pdf, cursor.y, rowHeight, columns.boundaries, false);
+
+        setPdfFont(pdf, 9.75);
+        if (isItem) {
+            drawPdfCenteredLines(pdf, [String(itemNo)], columns.x, cursor.y, columns.no, rowHeight, {
+                lineHeight: bodyLineHeight
+            });
+        }
+        drawPdfTextLines(pdf, descLines, columns.x + columns.no + bodyPadX, cursor.y + 1.2, {
+            lineHeight: bodyLineHeight,
+            maxWidth: columns.desc - bodyPadX * 2
+        });
+        drawPdfRightText(
+            pdf,
+            row.rp === "" ? "" : formatNumber(row.rp),
+            columns.usdX - bodyPadX,
+            cursor.y + Math.max((rowHeight - bodyLineHeight) / 2, 0),
+            { maxWidth: columns.rp - bodyPadX * 2 }
+        );
+        drawPdfRightText(
+            pdf,
+            formatUsd(row.usd),
+            columns.x + VECTOR_PDF.docWidth - bodyPadX,
+            cursor.y + Math.max((rowHeight - bodyLineHeight) / 2, 0),
+            { maxWidth: columns.usd - bodyPadX * 2 }
+        );
+
+        cursor.y += rowHeight;
+    });
+
+    const footerHeight = 6.6;
+    if (cursor.y + footerHeight > VECTOR_PDF.pageHeight - VECTOR_PDF.marginBottom) {
+        addVectorPdfPage(pdf, cursor);
+        drawVectorPdfCostHeader(pdf, cursor, columns, true);
+    }
+
+    drawVectorPdfTableFrame(pdf, cursor.y, footerHeight, columns.footerBoundaries, false);
+    setPdfFont(pdf, 9.75, "bold");
+    drawPdfCenteredLines(pdf, ["TOTAL"], columns.x, cursor.y, columns.no + columns.desc, footerHeight);
+    drawPdfRightText(
+        pdf,
+        formatNumber(data.activeTotals.rp),
+        columns.usdX - bodyPadX,
+        cursor.y + Math.max((footerHeight - bodyLineHeight) / 2, 0),
+        { maxWidth: columns.rp - bodyPadX * 2 }
+    );
+    drawPdfRightText(
+        pdf,
+        data.activeHasUsd ? formatUsd(data.activeTotals.usd) : "",
+        columns.x + VECTOR_PDF.docWidth - bodyPadX,
+        cursor.y + Math.max((footerHeight - bodyLineHeight) / 2, 0),
+        { maxWidth: columns.usd - bodyPadX * 2 }
+    );
+    cursor.y += footerHeight + pxToPdfMm(14);
+}
+
+function getVectorPdfNoteLines(pdf, noteText, width) {
+    const rawLines = String(noteText ?? "").split(/\r?\n/);
+    return rawLines.flatMap(line => splitPdfText(pdf, line, width));
+}
+
+function drawVectorPdfNote(pdf, data, cursor) {
+    setPdfFont(pdf, 9.75);
+    const noteLines = getVectorPdfNoteLines(pdf, data.noteText, VECTOR_PDF.docWidth);
+    const noteLineHeight = pdfFontHeight(9.75, 1.22);
+    const neededHeight = pdfFontHeight(9.75, 1.18) + pxToPdfMm(4) + noteLines.length * noteLineHeight;
+
+    ensureVectorPdfSpace(pdf, cursor, neededHeight);
+
+    setPdfFont(pdf, 9.75, "bold");
+    pdf.text("NOTE :", VECTOR_PDF.marginX, cursor.y, { baseline: "top" });
+    cursor.y += pdfFontHeight(9.75, 1.18) + pxToPdfMm(4);
+
+    setPdfFont(pdf, 9.75);
+    cursor.y = drawPdfTextLines(pdf, noteLines, VECTOR_PDF.marginX, cursor.y, {
+        lineHeight: noteLineHeight,
+        maxWidth: VECTOR_PDF.docWidth
+    });
+    cursor.y += pxToPdfMm(18);
+}
+
+function drawVectorPdfSummaryRow(pdf, label, value, x, y, colWidth) {
+    const valueWidth = 30;
+    const lineHeight = pdfFontHeight(9.75, 1.18);
+
+    setPdfFont(pdf, 9.75);
+    pdf.text(label, x, y, { baseline: "top" });
+    setPdfFont(pdf, 9.75, "bold");
+    drawPdfRightText(pdf, value, x + colWidth, y, { maxWidth: valueWidth });
+
+    setVectorPdfTableLineStyle(pdf);
+    pdf.setDrawColor(17, 17, 17);
+    pdf.line(x + colWidth - valueWidth, y + lineHeight, x + colWidth, y + lineHeight);
+}
+
+function drawVectorPdfSummary(pdf, data, cursor) {
+    if (data.docType !== "realisasi") return;
+
+    const gap = pxToPdfMm(28);
+    const colWidth = (VECTOR_PDF.docWidth - gap) / 2;
+    const rowHeight = 5.5;
+    const neededHeight = rowHeight * 3 + pxToPdfMm(18);
+
+    ensureVectorPdfSpace(pdf, cursor, neededHeight);
+
+    const leftX = VECTOR_PDF.marginX;
+    const rightX = VECTOR_PDF.marginX + colWidth + gap;
+    const rightLabelX = rightX + pxToPdfMm(28);
+    const rows = [
+        ["RECEIPT", data.summary.receiptRp, "USD", data.summary.receiptUsd],
+        ["TOTAL EXPENSE", data.summary.totalExpenseRp, "USD", data.summary.totalExpenseUsd],
+        ["(-)", data.summary.differenceRp, "USD", data.summary.differenceUsd]
+    ];
+
+    rows.forEach(([leftLabel, leftValue, rightLabel, rightValue], index) => {
+        const y = cursor.y + index * rowHeight;
+        drawVectorPdfSummaryRow(pdf, leftLabel, leftValue, leftX, y, colWidth);
+        drawVectorPdfSummaryRow(pdf, rightLabel, rightValue, rightLabelX, y, colWidth - pxToPdfMm(28));
+    });
+
+    cursor.y += neededHeight;
+}
+
+function getPdfImageInfo(source) {
+    if (!source) return Promise.resolve(null);
+
+    return new Promise(resolve => {
+        const image = new Image();
+        image.onload = () => {
+            const sourceWidth = image.naturalWidth || image.width;
+            const sourceHeight = image.naturalHeight || image.height;
+            if (!sourceWidth || !sourceHeight) {
+                resolve(null);
+                return;
+            }
+
+            const imageScale = Math.min(
+                1,
+                PDF_SIGNATURE_IMAGE_MAX_WIDTH / sourceWidth,
+                PDF_SIGNATURE_IMAGE_MAX_HEIGHT / sourceHeight
+            );
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(sourceWidth * imageScale));
+            canvas.height = Math.max(1, Math.round(sourceHeight * imageScale));
+
+            const context = canvas.getContext("2d");
+            if (!context || !canvas.width || !canvas.height) {
+                resolve(null);
+                return;
+            }
+
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            resolve({
+                data: canvas.toDataURL("image/png"),
+                format: "PNG",
+                width: canvas.width,
+                height: canvas.height
+            });
+        };
+        image.onerror = () => resolve(null);
+        image.src = source;
+    });
+}
+
+async function getVectorPdfSignatureImages(data) {
+    return await Promise.all(data.signatures.map(signature => getPdfImageInfo(signature.image)));
+}
+
+function drawVectorPdfSignatures(pdf, data, signatureImages, cursor) {
+    const gap = pxToPdfMm(36);
+    const colWidth = (VECTOR_PDF.docWidth - gap * 2) / 3;
+    const sectionHeight = 35;
+    const roleHeight = pdfFontHeight(9, 1.18);
+    const imageWrapHeight = pxToPdfMm(62);
+    const imageMaxWidth = pxToPdfMm(150);
+    const imageMaxHeight = pxToPdfMm(54);
+    const nameWidth = pxToPdfMm(160);
+    const sectionMarginTop = pxToPdfMm(34);
+
+    ensureVectorPdfSpace(pdf, cursor, sectionHeight + sectionMarginTop);
+    cursor.y += sectionMarginTop;
+
+    data.signatures.forEach((signature, index) => {
+        const colX = VECTOR_PDF.marginX + index * (colWidth + gap);
+        const centerX = colX + colWidth / 2;
+
+        setPdfFont(pdf, 9, "bold");
+        pdf.text(signature.role, centerX, cursor.y, {
+            align: "center",
+            baseline: "top"
+        });
+
+        const imageWrapY = cursor.y + roleHeight + pxToPdfMm(24);
+        const imageInfo = signatureImages[index];
+        if (imageInfo) {
+            const fitScale = Math.min(imageMaxWidth / imageInfo.width, imageMaxHeight / imageInfo.height);
+            const imageWidth = imageInfo.width * fitScale;
+            const imageHeight = imageInfo.height * fitScale;
+            pdf.addImage(
+                imageInfo.data,
+                imageInfo.format,
+                centerX - imageWidth / 2,
+                imageWrapY + imageWrapHeight - imageHeight,
+                imageWidth,
+                imageHeight
+            );
+        }
+
+        const lineY = imageWrapY + imageWrapHeight + pxToPdfMm(8);
+        pdf.setDrawColor(17, 17, 17);
+        pdf.setLineWidth(0.25);
+        pdf.line(centerX - nameWidth / 2, lineY, centerX + nameWidth / 2, lineY);
+
+        setPdfFont(pdf, 9.75);
+        pdf.text(signature.name, centerX, lineY + pxToPdfMm(6), {
+            align: "center",
+            baseline: "top",
+            maxWidth: colWidth
+        });
+    });
+
+    cursor.y += sectionHeight;
+}
+
+function drawVectorPdfFooter(pdf, cursor) {
+    const footerHeight = 4;
+    if (cursor.y + footerHeight > VECTOR_PDF.pageHeight - VECTOR_PDF.marginBottom) {
+        addVectorPdfPage(pdf, cursor);
+    }
+
+    setPdfFont(pdf, 7.5, "normal", 119);
+    pdf.text("Powered by Travel Expense", VECTOR_PDF.pageWidth / 2, VECTOR_PDF.pageHeight - 6, {
+        align: "center",
+        baseline: "top"
+    });
+}
+
+async function buildVectorPdfDocument(options = {}) {
+    const { autoPrint = false } = options;
+
+    if (!window.jspdf?.jsPDF) {
+        throw new Error("Library PDF belum siap. Pastikan koneksi internet aktif lalu refresh halaman.");
+    }
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p", "mm", "a4");
+    const data = getVectorPdfData();
+    const signatureImages = await getVectorPdfSignatureImages(data);
+    const cursor = { y: VECTOR_PDF.marginTop };
+
+    drawVectorPdfHeader(pdf, data, cursor);
+    drawVectorPdfInfoRows(pdf, data, cursor);
+    drawVectorPdfCostTable(pdf, data, cursor);
+    drawVectorPdfNote(pdf, data, cursor);
+    drawVectorPdfSummary(pdf, data, cursor);
+    drawVectorPdfSignatures(pdf, data, signatureImages, cursor);
+    drawVectorPdfFooter(pdf, cursor);
+
+    if (autoPrint) {
+        pdf.autoPrint();
+    }
+
+    return pdf;
 }
 
 function setButtonLoading(button, label) {
@@ -2245,39 +2677,7 @@ function setButtonLoading(button, label) {
 }
 
 async function buildPdfDocument(options = {}) {
-    const { autoPrint = false } = options;
-
-    if (typeof html2canvas !== "function" || !window.jspdf?.jsPDF) {
-        throw new Error("Library PDF belum siap. Pastikan koneksi internet aktif lalu refresh halaman.");
-    }
-
-    const { jsPDF } = window.jspdf;
-    const rawCanvas = await createPdfCanvas();
-    const canvas = trimCanvasBottomWhitespace(rawCanvas);
-    const imgData = canvas.toDataURL("image/png");
-
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = 210;
-    const pageHeight = 297;
-
-    const imgWidth = pageWidth;
-    const imgHeight = canvas.height * imgWidth / canvas.width;
-    const totalPages = Math.max(1, Math.ceil((imgHeight - 0.5) / pageHeight));
-
-    for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
-        if (pageIndex > 0) {
-            pdf.addPage();
-        }
-
-        const position = -pageIndex * pageHeight;
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-    }
-
-    if (autoPrint) {
-        pdf.autoPrint();
-    }
-
-    return pdf;
+    return await buildVectorPdfDocument(options);
 }
 
 async function downloadPdf(button = document.getElementById("downloadPdfBtn")) {

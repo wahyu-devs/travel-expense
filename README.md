@@ -20,7 +20,7 @@ The app runs fully in the browser and stores drafts in `localStorage`. There is 
 - Reset form back to the default company, note, and approver values.
 - Upload, preview, and remove prepared, checked, and approved signature images.
 - Print support through the generated PDF view.
-- PDF download through `html2canvas` and `jsPDF`.
+- Vector PDF download through `jsPDF`.
 - Dark and light mode.
 - Responsive desktop and mobile layout.
 
@@ -64,7 +64,7 @@ Saved data can be lost if the browser cache, site data, or `localStorage` is cle
 
 - `index.html` contains the app structure, forms, preview document, modal, and CDN dependencies.
 - `styles.css` contains the responsive layout, theme styling, document preview styling, and mobile refinements.
-- `app.js` contains state management, draft storage, calculations, preview rendering, signature handling, theme control, and PDF generation.
+- `app.js` contains state management, draft storage, calculations, preview rendering, signature handling, theme control, and vector PDF generation.
 
 ## Tech Stack
 
@@ -74,7 +74,6 @@ Saved data can be lost if the browser cache, site data, or `localStorage` is cle
 - Bootstrap 5 CSS
 - Bootstrap Icons
 - Bootstrap JavaScript
-- html2canvas
 - jsPDF
 - Browser `localStorage`
 
@@ -82,7 +81,7 @@ Saved data can be lost if the browser cache, site data, or `localStorage` is cle
 
 No installation is required. Open `index.html` directly in a browser.
 
-The app loads Bootstrap, Bootstrap Icons, html2canvas, and jsPDF from CDN links, so an internet connection is needed when those assets are not already cached by the browser.
+The app loads Bootstrap, Bootstrap Icons, and jsPDF from CDN links, so an internet connection is needed when those assets are not already cached by the browser.
 
 ## Notes
 
