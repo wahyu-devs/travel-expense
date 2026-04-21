@@ -2157,6 +2157,7 @@ const VECTOR_PDF = {
     marginX: 9,
     marginTop: 7,
     marginBottom: 8,
+    footerBottomOffset: 12,
     docWidth: 192,
     pxToMm: 210 / 794,
     lineWidth: PDF_TABLE_LINE_WIDTH,
@@ -2643,13 +2644,14 @@ function drawVectorPdfSignatures(pdf, data, signatureImages, cursor) {
 }
 
 function drawVectorPdfFooter(pdf, cursor) {
-    const footerHeight = 4;
-    if (cursor.y + footerHeight > VECTOR_PDF.pageHeight - VECTOR_PDF.marginBottom) {
+    const footerY = VECTOR_PDF.pageHeight - VECTOR_PDF.footerBottomOffset;
+    const footerHeight = pdfFontHeight(7.5);
+    if (cursor.y + footerHeight > footerY) {
         addVectorPdfPage(pdf, cursor);
     }
 
     setPdfFont(pdf, 7.5, "normal", 119);
-    pdf.text("Powered by Travel Expense", VECTOR_PDF.pageWidth / 2, VECTOR_PDF.pageHeight - 6, {
+    pdf.text("Powered by Travel Expense", VECTOR_PDF.pageWidth / 2, footerY, {
         align: "center",
         baseline: "top"
     });
