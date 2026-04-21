@@ -91,6 +91,8 @@ const PDF_SIGNATURE_IMAGE_MAX_HEIGHT = 324;
 const PREVIEW_TABLE_BORDER_WIDTH = 0.2;
 const PREVIEW_TABLE_VISIBLE_BORDER_WIDTH = 0.3;
 const PREVIEW_TABLE_MAX_BORDER_WIDTH = 0.8;
+const PREVIEW_TABLE_MOBILE_VISIBLE_BORDER_WIDTH = 1;
+const PREVIEW_TABLE_MOBILE_MAX_BORDER_WIDTH = 2.6;
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -1747,10 +1749,17 @@ function updatePreviewScale() {
     const baseHeight = doc.offsetHeight || 1123;
     const availableWidth = Math.max(scroll.clientWidth - 8, 0);
     const scale = availableWidth > 0 ? Math.min(1, availableWidth / baseWidth) : 1;
+    const mobilePreview = isMobileActionMenuLayout();
+    const visibleBorderWidth = mobilePreview
+        ? PREVIEW_TABLE_MOBILE_VISIBLE_BORDER_WIDTH
+        : PREVIEW_TABLE_VISIBLE_BORDER_WIDTH;
+    const maxBorderWidth = mobilePreview
+        ? PREVIEW_TABLE_MOBILE_MAX_BORDER_WIDTH
+        : PREVIEW_TABLE_MAX_BORDER_WIDTH;
 
     stage.style.setProperty("--preview-scale", scale);
     const tableBorderWidth = scale < 1
-        ? Math.min(PREVIEW_TABLE_MAX_BORDER_WIDTH, PREVIEW_TABLE_VISIBLE_BORDER_WIDTH / scale)
+        ? Math.min(maxBorderWidth, visibleBorderWidth / scale)
         : PREVIEW_TABLE_BORDER_WIDTH;
     stage.style.setProperty("--preview-table-border-width", `${tableBorderWidth}px`);
     stage.style.width = `${baseWidth * scale}px`;
