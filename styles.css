@@ -860,7 +860,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
 .doc-cost td,
 .doc-cost th {
-    border: 0.2px solid var(--doc-line);
+    border: var(--preview-table-border-width, 0.2px) solid var(--doc-line);
     padding: 3px 5px;
     vertical-align: top;
 }

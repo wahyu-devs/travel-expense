@@ -88,6 +88,9 @@ const PDF_TABLE_LINE_WIDTH = 0.2;
 const PDF_TABLE_LINE_COLOR = 28;
 const PDF_SIGNATURE_IMAGE_MAX_WIDTH = 900;
 const PDF_SIGNATURE_IMAGE_MAX_HEIGHT = 324;
+const PREVIEW_TABLE_BORDER_WIDTH = 0.2;
+const PREVIEW_TABLE_VISIBLE_BORDER_WIDTH = 0.3;
+const PREVIEW_TABLE_MAX_BORDER_WIDTH = 0.8;
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -1734,6 +1737,7 @@ function updatePreviewScale() {
 
     if (previewUnavailable) {
         stage.style.removeProperty("--preview-scale");
+        stage.style.removeProperty("--preview-table-border-width");
         stage.style.width = "";
         stage.style.height = "";
         return;
@@ -1745,6 +1749,10 @@ function updatePreviewScale() {
     const scale = availableWidth > 0 ? Math.min(1, availableWidth / baseWidth) : 1;
 
     stage.style.setProperty("--preview-scale", scale);
+    const tableBorderWidth = scale < 1
+        ? Math.min(PREVIEW_TABLE_MAX_BORDER_WIDTH, PREVIEW_TABLE_VISIBLE_BORDER_WIDTH / scale)
+        : PREVIEW_TABLE_BORDER_WIDTH;
+    stage.style.setProperty("--preview-table-border-width", `${tableBorderWidth}px`);
     stage.style.width = `${baseWidth * scale}px`;
     stage.style.height = `${baseHeight * scale}px`;
 }
