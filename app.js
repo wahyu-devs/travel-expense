@@ -2651,7 +2651,7 @@ function drawVectorPdfFooter(pdf, cursor) {
     }
 
     setPdfFont(pdf, 7.5, "normal", 119);
-    pdf.text("Powered by Travel Expense", VECTOR_PDF.pageWidth / 2, footerY, {
+    pdf.text("Travel Expense by Wahyu", VECTOR_PDF.pageWidth / 2, footerY, {
         align: "center",
         baseline: "top"
     });
