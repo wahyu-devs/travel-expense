@@ -591,13 +591,21 @@ function formatPoLabel(value) {
     return /^po\b/i.test(poNumber) ? poNumber : `PO ${poNumber}`;
 }
 
-function createAutoDraftTitle(savedAt = new Date()) {
-    const parts = [
-        state.docDate ? formatDateIndo(state.docDate) : "",
-        state.destination,
-        state.purpose,
-        formatPoLabel(state.poNumber)
+function formatDraftPoLabel(value) {
+    return formatDisplayText(formatPoLabel(value), DISPLAY_CASE.proper);
+}
+
+function getDraftTitleParts(draftState = state) {
+    return [
+        draftState.docDate ? formatDateIndo(draftState.docDate) : "",
+        formatDisplayText(draftState.destination, DISPLAY_CASE.proper),
+        formatDisplayText(draftState.purpose, DISPLAY_CASE.proper),
+        formatDraftPoLabel(draftState.poNumber)
     ].map(value => String(value ?? "").trim()).filter(Boolean);
+}
+
+function createAutoDraftTitle(savedAt = new Date()) {
+    const parts = getDraftTitleParts();
 
     if (parts.length) {
         return parts.join(" | ");
@@ -608,7 +616,9 @@ function createAutoDraftTitle(savedAt = new Date()) {
 
 function createAutoProjectName() {
     return cleanDraftLabel(
-        state.destination || state.purpose || formatPoLabel(state.poNumber),
+        formatDisplayText(state.destination, DISPLAY_CASE.proper)
+        || formatDisplayText(state.purpose, DISPLAY_CASE.proper)
+        || formatDraftPoLabel(state.poNumber),
         "Draft lokal"
     );
 }
@@ -740,13 +750,7 @@ function formatDraftUpdatedAt(value) {
 }
 
 function getDraftDetailLine(draft) {
-    const draftState = draft.state || {};
-    const details = [
-        draftState.docDate ? formatDateIndo(draftState.docDate) : "",
-        draftState.destination,
-        draftState.purpose,
-        formatPoLabel(draftState.poNumber)
-    ].filter(Boolean);
+    const details = getDraftTitleParts(draft.state || {});
 
     return details.length ? details.join(" | ") : "Belum ada detail dokumen";
 }
