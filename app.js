@@ -93,6 +93,11 @@ const PREVIEW_TABLE_VISIBLE_BORDER_WIDTH = 0.3;
 const PREVIEW_TABLE_MAX_BORDER_WIDTH = 0.8;
 const PREVIEW_TABLE_MOBILE_VISIBLE_BORDER_WIDTH = 0.5;
 const PREVIEW_TABLE_MOBILE_MAX_BORDER_WIDTH = 2.6;
+const DISPLAY_CASE = {
+    raw: "raw",
+    proper: "proper",
+    upper: "upper"
+};
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -292,6 +297,46 @@ function formatNumber(value) {
 function formatUsd(value) {
     const formatted = formatNumber(value);
     return formatted ? `$ ${formatted}` : "";
+}
+
+function formatDisplayText(value, mode = DISPLAY_CASE.raw) {
+    const text = String(value ?? "");
+    if (!text) return "";
+
+    if (mode === DISPLAY_CASE.upper) {
+        return text.toLocaleUpperCase("id-ID");
+    }
+
+    if (mode !== DISPLAY_CASE.proper) {
+        return text;
+    }
+
+    return text.replace(/\S+/gu, token => formatProperCaseToken(token));
+}
+
+function formatSubmissionPeriodDisplayText(value) {
+    return formatDisplayText(value, DISPLAY_CASE.proper)
+        .replace(/\bS\/D\b/gu, "s/d");
+}
+
+function formatProperCaseToken(token) {
+    if (!/\p{L}/u.test(token)) return token;
+
+    return token.replace(/\p{L}[\p{L}\p{M}'’]*/gu, word => formatProperCaseWord(word));
+}
+
+function formatProperCaseWord(word) {
+    if (isUppercaseWord(word)) {
+        return word;
+    }
+
+    return word
+        .toLocaleLowerCase("id-ID")
+        .replace(/(^|['’])\p{L}/gu, match => match.toLocaleUpperCase("id-ID"));
+}
+
+function isUppercaseWord(word) {
+    return /\p{Lu}/u.test(word) && !/\p{Ll}/u.test(word);
 }
 
 function formatInputThousands(value) {
@@ -1706,6 +1751,15 @@ function getPreviewInfoValue(docType, baseKey) {
     return pair ? state[pair.realisasiKey] ?? "" : state[baseKey] ?? "";
 }
 
+function getPreviewInfoDisplayValue(docType, baseKey) {
+    if (baseKey === "submissionPeriod") {
+        return formatSubmissionPeriodDisplayText(getPreviewInfoValue(docType, baseKey));
+    }
+
+    const mode = baseKey === "companyName" ? DISPLAY_CASE.upper : DISPLAY_CASE.proper;
+    return formatDisplayText(getPreviewInfoValue(docType, baseKey), mode);
+}
+
 function renderPreviewCosts(docType = getActiveDocType()) {
     const tbody = document.getElementById("previewCostBody");
     const costs = getCosts(docType);
@@ -1719,7 +1773,7 @@ function renderPreviewCosts(docType = getActiveDocType()) {
 
         tr.innerHTML = `
           <td class="no-col">${isItem ? itemNo : ""}</td>
-          <td class="desc-col">${escapeHtml(row.description || "")}</td>
+          <td class="desc-col">${escapeHtml(formatDisplayText(row.description, DISPLAY_CASE.proper))}</td>
           <td class="rp-col">${row.rp === "" ? "" : formatNumber(row.rp)}</td>
           <td class="usd-col">${formatUsd(row.usd)}</td>
         `;
@@ -1788,28 +1842,28 @@ function renderPreview() {
             : "Lengkapi data perjalanan, biaya pengajuan, dan tanda tangan. Total pada tab ini digunakan sebagai receipt pada Realisasi."
     );
 
-    setText("pvCompanyName", getPreviewInfoValue(docType, "companyName"));
+    setText("pvCompanyName", getPreviewInfoDisplayValue(docType, "companyName"));
     const previewDocDate = getPreviewDocDate(docType);
     setText("pvDate", previewDocDate ? "Tanggal " + formatDateIndo(previewDocDate) : "Tanggal");
     setText("pvTitle", docType === "realisasi" ? "BIAYA PERJALANAN" : "UANG MUKA PERJALANAN");
 
-    setText("pvDepartment", getPreviewInfoValue(docType, "department"));
-    setText("pvDestination", getPreviewInfoValue(docType, "destination"));
-    setText("pvPurpose", getPreviewInfoValue(docType, "purpose"));
-    setText("pvPoNumber", getPreviewInfoValue(docType, "poNumber"));
-    setText("pvProjectDuration", getPreviewInfoValue(docType, "projectDuration"));
-    setText("pvSubmissionPeriod", getPreviewInfoValue(docType, "submissionPeriod"));
-    setText("pvInstallerName", getPreviewInfoValue(docType, "installerName"));
-    setText("pvSalesName", getPreviewInfoValue(docType, "salesName"));
+    setText("pvDepartment", getPreviewInfoDisplayValue(docType, "department"));
+    setText("pvDestination", getPreviewInfoDisplayValue(docType, "destination"));
+    setText("pvPurpose", getPreviewInfoDisplayValue(docType, "purpose"));
+    setText("pvPoNumber", getPreviewInfoDisplayValue(docType, "poNumber"));
+    setText("pvProjectDuration", getPreviewInfoDisplayValue(docType, "projectDuration"));
+    setText("pvSubmissionPeriod", getPreviewInfoDisplayValue(docType, "submissionPeriod"));
+    setText("pvInstallerName", getPreviewInfoDisplayValue(docType, "installerName"));
+    setText("pvSalesName", getPreviewInfoDisplayValue(docType, "salesName"));
 
     renderPreviewCosts(docType);
     setText("pvGrandTotal", formatNumber(activeTotals.rp));
     setText("pvGrandTotalUsd", activeHasUsd ? formatUsd(activeTotals.usd) : "");
     setText("pvNote", state.noteText);
 
-    setText("pvPreparedBy", state.preparedBy || "");
-    setText("pvCheckedBy", state.checkedBy || "");
-    setText("pvApprovedBy", state.approvedBy || "");
+    setText("pvPreparedBy", formatDisplayText(state.preparedBy, DISPLAY_CASE.proper));
+    setText("pvCheckedBy", formatDisplayText(state.checkedBy, DISPLAY_CASE.proper));
+    setText("pvApprovedBy", formatDisplayText(state.approvedBy, DISPLAY_CASE.proper));
 
     setSignImage("pvPreparedSign", state.preparedSign);
     setSignImage("pvCheckedSign", state.checkedSign);
@@ -2251,27 +2305,42 @@ function getVectorPdfData(docType = getActiveDocType()) {
 
     return {
         docType,
-        companyName: getPreviewInfoValue(docType, "companyName"),
+        companyName: getPreviewInfoDisplayValue(docType, "companyName"),
         dateText: previewDocDate ? `Tanggal ${formatDateIndo(previewDocDate)}` : "Tanggal",
         title: docType === "realisasi" ? "BIAYA PERJALANAN" : "UANG MUKA PERJALANAN",
         infoRows: [
-            ["DEPARTEMEN", getPreviewInfoValue(docType, "department")],
-            ["TUJUAN", getPreviewInfoValue(docType, "destination")],
-            ["KEPERLUAN", getPreviewInfoValue(docType, "purpose")],
-            ["NO. PO", getPreviewInfoValue(docType, "poNumber")],
-            ["LAMA PROJECT", getPreviewInfoValue(docType, "projectDuration")],
-            ["PENGAJUAN", getPreviewInfoValue(docType, "submissionPeriod")],
-            ["NAMA INSTALLER/ENGINEER", getPreviewInfoValue(docType, "installerName")],
-            ["NAMA SALES", getPreviewInfoValue(docType, "salesName")]
+            ["DEPARTEMEN", getPreviewInfoDisplayValue(docType, "department")],
+            ["TUJUAN", getPreviewInfoDisplayValue(docType, "destination")],
+            ["KEPERLUAN", getPreviewInfoDisplayValue(docType, "purpose")],
+            ["NO. PO", getPreviewInfoDisplayValue(docType, "poNumber")],
+            ["LAMA PROJECT", getPreviewInfoDisplayValue(docType, "projectDuration")],
+            ["PENGAJUAN", getPreviewInfoDisplayValue(docType, "submissionPeriod")],
+            ["NAMA INSTALLER/ENGINEER", getPreviewInfoDisplayValue(docType, "installerName")],
+            ["NAMA SALES", getPreviewInfoDisplayValue(docType, "salesName")]
         ],
-        costs: activeCosts,
+        costs: activeCosts.map(row => ({
+            ...row,
+            description: formatDisplayText(row.description, DISPLAY_CASE.proper)
+        })),
         activeTotals,
         activeHasUsd,
         noteText: state.noteText,
         signatures: [
-            { role: "PREPARED BY :", name: state.preparedBy || "", image: state.preparedSign },
-            { role: "CHECKED BY :", name: state.checkedBy || "", image: state.checkedSign },
-            { role: "APPROVED BY :", name: state.approvedBy || "", image: state.approvedSign }
+            {
+                role: "PREPARED BY :",
+                name: formatDisplayText(state.preparedBy, DISPLAY_CASE.proper),
+                image: state.preparedSign
+            },
+            {
+                role: "CHECKED BY :",
+                name: formatDisplayText(state.checkedBy, DISPLAY_CASE.proper),
+                image: state.checkedSign
+            },
+            {
+                role: "APPROVED BY :",
+                name: formatDisplayText(state.approvedBy, DISPLAY_CASE.proper),
+                image: state.approvedSign
+            }
         ],
         summary: {
             receiptRp: formatNumber(receiptTotals.rp),
