@@ -1442,17 +1442,9 @@ function renderCostEditor(docType) {
                 </span>
                 <i class="bi bi-chevron-right"></i>
               </button>
-              <div class="mobile-cost-actions">
-                <button class="mini-btn cost-row-action-btn move-row-btn mobile-cost-action-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" data-row-move="up" aria-label="Pindahkan biaya ${index + 1} ke atas" ${isFirstRow ? "disabled" : ""}>
-                  <i class="bi bi-arrow-up-short"></i>
-                </button>
-                <button class="mini-btn cost-row-action-btn move-row-btn mobile-cost-action-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" data-row-move="down" aria-label="Pindahkan biaya ${index + 1} ke bawah" ${isLastRow ? "disabled" : ""}>
-                  <i class="bi bi-arrow-down-short"></i>
-                </button>
-                <button class="mini-btn cost-row-action-btn delete-row-btn mobile-cost-action-btn danger-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" aria-label="Hapus biaya ${index + 1}">
-                  <i class="bi bi-trash3"></i>
-                </button>
-              </div>
+              <button class="mini-btn delete-row-btn mobile-cost-delete-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" aria-label="Hapus biaya ${index + 1}">
+                <i class="bi bi-trash3"></i>
+              </button>
             </div>
           </td>
           <td data-label="Tipe">

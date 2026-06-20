@@ -2294,11 +2294,6 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         min-width: 0;
     }
 
-    .mobile-cost-actions {
-        display: grid;
-        gap: 6px;
-    }
-
     .mobile-cost-edit-btn {
         min-width: 0;
         border: 1px solid var(--line-soft);
@@ -2359,10 +2354,11 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         line-height: 1.2;
     }
 
-    .mobile-cost-action-btn {
+    .mobile-cost-delete-btn.delete-row-btn {
         width: 38px;
         min-width: 38px;
-        min-height: 34px;
+        min-height: 100%;
+        margin-top: 0;
         padding: 0;
     }
 
