@@ -1444,10 +1444,10 @@ function renderCostEditor(docType) {
               </button>
               <div class="mobile-cost-actions">
                 <button class="mini-btn cost-row-action-btn move-row-btn mobile-cost-action-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" data-row-move="up" aria-label="Pindahkan biaya ${index + 1} ke atas" ${isFirstRow ? "disabled" : ""}>
-                  <i class="bi bi-arrow-up"></i>
+                  <i class="bi bi-arrow-up-short"></i>
                 </button>
                 <button class="mini-btn cost-row-action-btn move-row-btn mobile-cost-action-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" data-row-move="down" aria-label="Pindahkan biaya ${index + 1} ke bawah" ${isLastRow ? "disabled" : ""}>
-                  <i class="bi bi-arrow-down"></i>
+                  <i class="bi bi-arrow-down-short"></i>
                 </button>
                 <button class="mini-btn cost-row-action-btn delete-row-btn mobile-cost-action-btn danger-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" aria-label="Hapus biaya ${index + 1}">
                   <i class="bi bi-trash3"></i>
@@ -1473,10 +1473,10 @@ function renderCostEditor(docType) {
           <td class="text-center cost-row-actions-cell" data-label="Aksi">
             <div class="cost-row-actions">
               <button class="mini-btn cost-row-action-btn move-row-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" data-row-move="up" aria-label="Pindahkan biaya ${index + 1} ke atas" ${isFirstRow ? "disabled" : ""}>
-                <i class="bi bi-arrow-up"></i>
+                <i class="bi bi-arrow-up-short"></i>
               </button>
               <button class="mini-btn cost-row-action-btn move-row-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" data-row-move="down" aria-label="Pindahkan biaya ${index + 1} ke bawah" ${isLastRow ? "disabled" : ""}>
-                <i class="bi bi-arrow-down"></i>
+                <i class="bi bi-arrow-down-short"></i>
               </button>
               <button class="mini-btn cost-row-action-btn delete-row-btn danger-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" aria-label="Hapus biaya ${index + 1}">
                 <i class="bi bi-trash3"></i>
