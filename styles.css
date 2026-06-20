@@ -708,6 +708,10 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     white-space: nowrap;
 }
 
+.cost-editor-table tr.cost-row-moved td:not(.mobile-cost-card-cell) {
+    animation: cost-row-move-glow .9s ease;
+}
+
 .cost-row-actions {
     display: inline-flex;
     align-items: center;
@@ -740,6 +744,18 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
 .cost-row-action-btn:disabled:hover {
     background: transparent;
+}
+
+@keyframes cost-row-move-glow {
+    0% {
+        background: rgba(31, 111, 235, .2);
+    }
+    45% {
+        background: rgba(31, 111, 235, .12);
+    }
+    100% {
+        background: rgba(31, 111, 235, 0);
+    }
 }
 
 .mobile-cost-card-cell {
@@ -2470,5 +2486,11 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
     .cost-editor-table td::before {
         margin-bottom: -2px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cost-editor-table tr.cost-row-moved td:not(.mobile-cost-card-cell) {
+        animation: none;
     }
 }

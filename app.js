@@ -80,6 +80,9 @@ const costEditorCollapsed = {
     realisasi: true
 };
 let costRowIdCounter = 0;
+const COST_ROW_MOVE_FEEDBACK_MS = 900;
+const COST_ROW_MOVE_ANIMATION_MS = 320;
+let recentCostRowMove = null;
 const activeCostEdit = {
     docType: null,
     index: null,
@@ -1418,6 +1421,73 @@ function getCostRowUsdLabel(row) {
     return row.usd === "" ? "" : formatUsd(row.usd);
 }
 
+function isDesktopViewport() {
+    return window.matchMedia("(min-width: 1024px)").matches;
+}
+
+function markRecentCostRowMove(docType, rowId) {
+    recentCostRowMove = {
+        docType,
+        rowId,
+        at: Date.now()
+    };
+}
+
+function getRecentCostRowMoveClass(docType, rowId) {
+    if (!isDesktopViewport() || !recentCostRowMove) return "";
+    if (recentCostRowMove.docType !== docType || recentCostRowMove.rowId !== rowId) return "";
+    if ((Date.now() - recentCostRowMove.at) > COST_ROW_MOVE_FEEDBACK_MS) return "";
+    return "cost-row-moved";
+}
+
+function captureCostRowPositions(docType) {
+    if (!isDesktopViewport()) return null;
+    const tbody = document.getElementById(getCostEditorBodyId(docType));
+    if (!tbody) return null;
+    const positions = new Map();
+    tbody.querySelectorAll("tr[data-cost-row-id]").forEach(rowEl => {
+        positions.set(rowEl.dataset.costRowId, rowEl.getBoundingClientRect().top);
+    });
+    return positions;
+}
+
+function animateCostRowReorder(docType, previousPositions) {
+    if (!isDesktopViewport() || !previousPositions?.size) return;
+    const tbody = document.getElementById(getCostEditorBodyId(docType));
+    if (!tbody) return;
+
+    requestAnimationFrame(() => {
+        tbody.querySelectorAll("tr[data-cost-row-id]").forEach(rowEl => {
+            const previousTop = previousPositions.get(rowEl.dataset.costRowId);
+            if (previousTop === undefined) return;
+
+            const deltaY = previousTop - rowEl.getBoundingClientRect().top;
+            if (Math.abs(deltaY) < 1) return;
+
+            Array.from(rowEl.cells)
+                .filter(cell => !cell.classList.contains("mobile-cost-card-cell"))
+                .forEach(cell => {
+                    cell.animate(
+                        [
+                            {
+                                transform: `translateY(${deltaY}px)`,
+                                opacity: 0.92
+                            },
+                            {
+                                transform: "translateY(0)",
+                                opacity: 1
+                            }
+                        ],
+                        {
+                            duration: COST_ROW_MOVE_ANIMATION_MS,
+                            easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+                        }
+                    );
+                });
+        });
+    });
+}
+
 function renderCostEditor(docType) {
     const tbody = document.getElementById(getCostEditorBodyId(docType));
     const costs = getCosts(docType);
@@ -1427,7 +1497,13 @@ function renderCostEditor(docType) {
     costs.forEach((row, index) => {
         const isFirstRow = index === 0;
         const isLastRow = index === costs.length - 1;
+        const rowId = getCostRowId(row);
         const tr = document.createElement("tr");
+        const moveFeedbackClass = getRecentCostRowMoveClass(docType, rowId);
+        tr.dataset.costRowId = rowId;
+        if (moveFeedbackClass) {
+            tr.className = moveFeedbackClass;
+        }
         tr.innerHTML = `
           <td class="mobile-cost-card-cell" colspan="5">
             <div class="mobile-cost-card">
@@ -1531,6 +1607,7 @@ function moveCostRow(docType, idx, direction) {
     const costs = getCosts(docType);
     const nextIdx = direction === "up" ? idx - 1 : idx + 1;
     if (!costs[idx] || !costs[nextIdx]) return;
+    const previousPositions = captureCostRowPositions(docType);
 
     if (docType === "realisasi") {
         state.realisasiManualEdit = true;
@@ -1543,7 +1620,9 @@ function moveCostRow(docType, idx, direction) {
         syncRealisasiCostsFromAdvance();
     }
 
+    markRecentCostRowMove(docType, getCostRowId(movedRow));
     renderAllCostEditors();
+    animateCostRowReorder(docType, previousPositions);
     renderPreview();
 }
 
