@@ -12,6 +12,7 @@
     --accent-dark: #111111;
     --primary: #1f6feb;
     --shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+    --cost-table-header-bg: #13161c;
 
     --fs-ui-2xs: 0.72rem;
     --fs-ui-xs: 0.76rem;
@@ -46,6 +47,7 @@ html[data-theme="light"] {
     --accent-dark: #ffffff;
     --primary: #1f6feb;
     --shadow: 0 18px 40px rgba(15, 23, 42, 0.09);
+    --cost-table-header-bg: #ffffff;
     --scrollbar-track: #edf2f7;
     --scrollbar-thumb: #c0c9d6;
     --scrollbar-thumb-hover: #a7b4c4;
@@ -682,7 +684,8 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 .cost-editor-table {
     width: 100%;
     min-width: 760px;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 .cost-editor-table th,
@@ -697,7 +700,16 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     font-size: var(--fs-ui-xs);
     font-weight: 800;
     color: var(--muted);
-    background: rgba(255, 255, 255, .01);
+    background: var(--cost-table-header-bg);
+}
+
+.cost-type-cell {
+    width: 104px;
+    min-width: 104px;
+}
+
+.cost-description-cell {
+    min-width: 280px;
 }
 
 .cost-editor-table tr:last-child td {
@@ -708,8 +720,30 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     white-space: nowrap;
 }
 
+@media (min-width: 1024px) {
+    .cost-editor-table .cost-description-cell {
+        position: sticky;
+    }
+
+    .cost-editor-table td.cost-description-cell {
+        left: 0;
+        background: var(--panel);
+        background-clip: border-box;
+        z-index: 2;
+        box-shadow: 16px 0 22px -22px rgba(15, 23, 42, .9);
+    }
+
+    .cost-editor-table th.cost-description-cell {
+        left: 0;
+        background: var(--cost-table-header-bg);
+        background-clip: border-box;
+        z-index: 4;
+    }
+}
+
 .cost-editor-table tr.cost-row-moved td:not(.mobile-cost-card-cell) {
     animation: cost-row-move-glow .9s ease;
+    background-repeat: no-repeat;
 }
 
 .cost-row-actions {
@@ -748,13 +782,13 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
 @keyframes cost-row-move-glow {
     0% {
-        background: rgba(31, 111, 235, .2);
+        background-image: linear-gradient(rgba(31, 111, 235, .2), rgba(31, 111, 235, .2));
     }
     45% {
-        background: rgba(31, 111, 235, .12);
+        background-image: linear-gradient(rgba(31, 111, 235, .12), rgba(31, 111, 235, .12));
     }
     100% {
-        background: rgba(31, 111, 235, 0);
+        background-image: linear-gradient(rgba(31, 111, 235, 0), rgba(31, 111, 235, 0));
     }
 }
 

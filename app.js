@@ -1470,12 +1470,10 @@ function animateCostRowReorder(docType, previousPositions) {
                     cell.animate(
                         [
                             {
-                                transform: `translateY(${deltaY}px)`,
-                                opacity: 0.92
+                                transform: `translateY(${deltaY}px)`
                             },
                             {
-                                transform: "translateY(0)",
-                                opacity: 1
+                                transform: "translateY(0)"
                             }
                         ],
                         {
@@ -1523,19 +1521,19 @@ function renderCostEditor(docType) {
               </button>
             </div>
           </td>
-          <td data-label="Tipe">
+          <td class="cost-type-cell" data-label="Tipe">
             <select class="form-select row-type-badge" data-cost-doc="${docType}" data-row-index="${index}" data-row-field="type">
               <option value="item" ${row.type === "item" ? "selected" : ""}>Item</option>
               <option value="sub" ${row.type === "sub" ? "selected" : ""}>Sub-item</option>
             </select>
           </td>
-          <td data-label="Deskripsi">
+          <td class="cost-description-cell" data-label="Deskripsi">
             <input type="text" class="form-control" data-cost-doc="${docType}" data-row-index="${index}" data-row-field="description" value="${escapeAttr(row.description)}" placeholder="Deskripsi biaya">
           </td>
-          <td data-label="Rp">
+          <td class="cost-rp-cell" data-label="Rp">
             <input type="text" inputmode="numeric" class="form-control" data-cost-doc="${docType}" data-row-index="${index}" data-row-field="rp" value="${row.rp === "" ? "" : formatInputThousands(row.rp)}" placeholder="0">
           </td>
-          <td data-label="USD">
+          <td class="cost-usd-cell" data-label="USD">
             <input type="text" inputmode="numeric" class="form-control" data-cost-doc="${docType}" data-row-index="${index}" data-row-field="usd" value="${row.usd === "" ? "" : formatInputThousands(row.usd)}" placeholder="">
           </td>
           <td class="text-center cost-row-actions-cell" data-label="Aksi">
