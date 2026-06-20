@@ -730,7 +730,6 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         background: var(--panel);
         background-clip: border-box;
         z-index: 2;
-        box-shadow: 16px 0 22px -22px rgba(15, 23, 42, .9);
     }
 
     .cost-editor-table th.cost-description-cell {
