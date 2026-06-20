@@ -704,6 +704,35 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     border-bottom: 0;
 }
 
+.cost-row-actions-cell {
+    white-space: nowrap;
+}
+
+.cost-row-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.cost-row-action-btn {
+    width: 34px;
+    min-width: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cost-row-action-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.cost-row-action-btn:disabled:hover {
+    background: transparent;
+}
+
 .mobile-cost-card-cell {
     display: none;
 }
@@ -2256,6 +2285,11 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         min-width: 0;
     }
 
+    .mobile-cost-actions {
+        display: grid;
+        gap: 6px;
+    }
+
     .mobile-cost-edit-btn {
         min-width: 0;
         border: 1px solid var(--line-soft);
@@ -2316,22 +2350,16 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
         line-height: 1.2;
     }
 
-    .mobile-cost-delete-btn.delete-row-btn {
+    .mobile-cost-action-btn {
         width: 38px;
-        min-height: 100%;
-        margin-top: 0;
+        min-width: 38px;
+        min-height: 34px;
         padding: 0;
     }
 
     .row-type-badge {
         width: 100%;
         min-width: 0;
-    }
-
-    .delete-row-btn {
-        width: 100%;
-        min-height: 44px;
-        margin-top: 2px;
     }
 
     .signature-preview-mini {

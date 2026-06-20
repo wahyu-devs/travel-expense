@@ -79,6 +79,7 @@ const costEditorCollapsed = {
     ump: true,
     realisasi: true
 };
+let costRowIdCounter = 0;
 const activeCostEdit = {
     docType: null,
     index: null,
@@ -101,6 +102,11 @@ const DISPLAY_CASE = {
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
+}
+
+function createCostRowId() {
+    costRowIdCounter += 1;
+    return `cost-row-${Date.now().toString(36)}-${costRowIdCounter.toString(36)}`;
 }
 
 function hasOwnValue(source, key) {
@@ -171,18 +177,28 @@ function syncSubmissionPeriodDisplay() {
     );
 }
 
-function normalizeCostRows(rows, fallbackRows = []) {
-    const sourceRows = Array.isArray(rows) ? rows : fallbackRows;
-    return sourceRows.map(row => ({
+function getComparableCostRow(row = {}) {
+    return {
         type: row?.type === "sub" ? "sub" : "item",
         description: typeof row?.description === "string" ? row.description : "",
         rp: parseMaybeNumber(row?.rp),
         usd: parseMaybeNumber(row?.usd)
+    };
+}
+
+function normalizeCostRows(rows, fallbackRows = [], referenceRows = []) {
+    const sourceRows = Array.isArray(rows) ? rows : fallbackRows;
+    return sourceRows.map((row, index) => ({
+        id: typeof row?.id === "string" && row.id
+            ? row.id
+            : (getCostRowId(referenceRows[index]) || createCostRowId()),
+        ...getComparableCostRow(row)
     }));
 }
 
 function areCostRowsEqual(leftRows = [], rightRows = []) {
-    return JSON.stringify(normalizeCostRows(leftRows)) === JSON.stringify(normalizeCostRows(rightRows));
+    const normalizeForCompare = rows => (Array.isArray(rows) ? rows : []).map(getComparableCostRow);
+    return JSON.stringify(normalizeForCompare(leftRows)) === JSON.stringify(normalizeForCompare(rightRows));
 }
 
 function areCostRowsEqualByIndex(leftRow, rightRow) {
@@ -190,6 +206,32 @@ function areCostRowsEqualByIndex(leftRow, rightRow) {
         leftRow === undefined ? [] : [leftRow],
         rightRow === undefined ? [] : [rightRow]
     );
+}
+
+function getCostRowId(row) {
+    return typeof row?.id === "string" && row.id ? row.id : "";
+}
+
+function createCostRowMap(rows = []) {
+    const rowMap = new Map();
+    rows.forEach(row => {
+        const id = getCostRowId(row);
+        if (id) {
+            rowMap.set(id, row);
+        }
+    });
+    return rowMap;
+}
+
+function isCostRowOrderAligned(currentRows = [], baseRows = []) {
+    const baseIds = baseRows.map(getCostRowId).filter(Boolean);
+    const baseIdSet = new Set(baseIds);
+    const currentIds = currentRows
+        .map(getCostRowId)
+        .filter(id => baseIdSet.has(id));
+    const currentIdSet = new Set(currentIds);
+    const filteredBaseIds = baseIds.filter(id => currentIdSet.has(id));
+    return JSON.stringify(currentIds) === JSON.stringify(filteredBaseIds);
 }
 
 function syncRealisasiCostsFromAdvance(options = {}) {
@@ -207,27 +249,73 @@ function syncRealisasiCostsFromAdvance(options = {}) {
         ? clone(state.realisasiBaseCosts)
         : [];
     const currentRealisasiCosts = clone(getCosts("realisasi"));
-    const mergedRealisasiCosts = nextBaseCosts.map((baseRow, index) => {
-        const currentRow = currentRealisasiCosts[index];
-        const previousBaseRow = previousBaseCosts[index];
+    const previousBaseRowMap = createCostRowMap(previousBaseCosts);
+    const currentRealisasiRowMap = createCostRowMap(currentRealisasiCosts);
+    const nextBaseRowMap = createCostRowMap(nextBaseCosts);
+    const nextBaseIdSet = new Set(nextBaseCosts.map(getCostRowId).filter(Boolean));
+    const preserveCurrentOrder = !isCostRowOrderAligned(currentRealisasiCosts, previousBaseCosts);
+    let mergedRealisasiCosts = [];
 
-        if (!currentRow || areCostRowsEqualByIndex(currentRow, previousBaseRow)) {
-            return clone(baseRow);
-        }
+    if (preserveCurrentOrder) {
+        const includedIds = new Set();
 
-        return clone(currentRow);
-    });
+        currentRealisasiCosts.forEach(currentRow => {
+            const rowId = getCostRowId(currentRow);
+            const previousBaseRow = previousBaseRowMap.get(rowId);
+            const nextBaseRow = nextBaseRowMap.get(rowId);
 
-    currentRealisasiCosts.slice(nextBaseCosts.length).forEach((currentRow, offset) => {
-        const previousBaseRow = previousBaseCosts[nextBaseCosts.length + offset];
-        if (!areCostRowsEqualByIndex(currentRow, previousBaseRow)) {
-            mergedRealisasiCosts.push(clone(currentRow));
-        }
-    });
+            if (nextBaseRow) {
+                mergedRealisasiCosts.push(
+                    !currentRow || areCostRowsEqualByIndex(currentRow, previousBaseRow)
+                        ? clone(nextBaseRow)
+                        : clone(currentRow)
+                );
+                includedIds.add(rowId);
+                return;
+            }
+
+            if (!areCostRowsEqualByIndex(currentRow, previousBaseRow)) {
+                mergedRealisasiCosts.push(clone(currentRow));
+                if (rowId) {
+                    includedIds.add(rowId);
+                }
+            }
+        });
+
+        nextBaseCosts.forEach(baseRow => {
+            const rowId = getCostRowId(baseRow);
+            if (!rowId || includedIds.has(rowId)) return;
+            mergedRealisasiCosts.push(clone(baseRow));
+        });
+    } else {
+        mergedRealisasiCosts = nextBaseCosts.map(baseRow => {
+            const rowId = getCostRowId(baseRow);
+            const currentRow = currentRealisasiRowMap.get(rowId);
+            const previousBaseRow = previousBaseRowMap.get(rowId);
+
+            if (!currentRow || areCostRowsEqualByIndex(currentRow, previousBaseRow)) {
+                return clone(baseRow);
+            }
+
+            return clone(currentRow);
+        });
+
+        currentRealisasiCosts.forEach(currentRow => {
+            const rowId = getCostRowId(currentRow);
+            if (rowId && nextBaseIdSet.has(rowId)) return;
+            const previousBaseRow = previousBaseRowMap.get(rowId);
+            if (!areCostRowsEqualByIndex(currentRow, previousBaseRow)) {
+                mergedRealisasiCosts.push(clone(currentRow));
+            }
+        });
+    }
 
     state.realisasiBaseCosts = clone(nextBaseCosts);
-    state.realisasiCosts = mergedRealisasiCosts;
-    if (areCostRowsEqual(state.realisasiCosts, state.realisasiBaseCosts)) {
+    state.realisasiCosts = normalizeCostRows(mergedRealisasiCosts, nextBaseCosts);
+    if (
+        areCostRowsEqual(state.realisasiCosts, state.realisasiBaseCosts)
+        && isCostRowOrderAligned(state.realisasiCosts, state.realisasiBaseCosts)
+    ) {
         state.realisasiManualEdit = false;
     }
     return true;
@@ -486,8 +574,16 @@ function applyStoredState(parsed = {}) {
     const legacyCosts = Array.isArray(parsed.costs) ? normalizeCostRows(parsed.costs, defaultCostRows) : null;
     const hasRealisasiBaseCosts = Array.isArray(parsed.realisasiBaseCosts);
     state.advanceCosts = normalizeCostRows(parsed.advanceCosts ?? legacyCosts, defaultCostRows);
-    state.realisasiCosts = normalizeCostRows(parsed.realisasiCosts ?? legacyCosts, state.advanceCosts);
-    state.realisasiBaseCosts = normalizeCostRows(parsed.realisasiBaseCosts ?? state.advanceCosts, state.advanceCosts);
+    state.realisasiBaseCosts = normalizeCostRows(
+        parsed.realisasiBaseCosts ?? state.advanceCosts,
+        state.advanceCosts,
+        state.advanceCosts
+    );
+    state.realisasiCosts = normalizeCostRows(
+        parsed.realisasiCosts ?? legacyCosts,
+        state.advanceCosts,
+        state.realisasiBaseCosts
+    );
     if (!hasRealisasiBaseCosts) {
         state.realisasiManualEdit = false;
     } else if (typeof parsed.realisasiManualEdit === "boolean") {
@@ -1329,6 +1425,8 @@ function renderCostEditor(docType) {
     tbody.innerHTML = "";
 
     costs.forEach((row, index) => {
+        const isFirstRow = index === 0;
+        const isLastRow = index === costs.length - 1;
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td class="mobile-cost-card-cell" colspan="5">
@@ -1344,9 +1442,17 @@ function renderCostEditor(docType) {
                 </span>
                 <i class="bi bi-chevron-right"></i>
               </button>
-              <button class="mini-btn delete-row-btn mobile-cost-delete-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" aria-label="Hapus biaya ${index + 1}">
-                <i class="bi bi-trash3"></i>
-              </button>
+              <div class="mobile-cost-actions">
+                <button class="mini-btn cost-row-action-btn move-row-btn mobile-cost-action-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" data-row-move="up" aria-label="Pindahkan biaya ${index + 1} ke atas" ${isFirstRow ? "disabled" : ""}>
+                  <i class="bi bi-arrow-up"></i>
+                </button>
+                <button class="mini-btn cost-row-action-btn move-row-btn mobile-cost-action-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" data-row-move="down" aria-label="Pindahkan biaya ${index + 1} ke bawah" ${isLastRow ? "disabled" : ""}>
+                  <i class="bi bi-arrow-down"></i>
+                </button>
+                <button class="mini-btn cost-row-action-btn delete-row-btn mobile-cost-action-btn danger-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" aria-label="Hapus biaya ${index + 1}">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
             </div>
           </td>
           <td data-label="Tipe">
@@ -1364,10 +1470,18 @@ function renderCostEditor(docType) {
           <td data-label="USD">
             <input type="text" inputmode="numeric" class="form-control" data-cost-doc="${docType}" data-row-index="${index}" data-row-field="usd" value="${row.usd === "" ? "" : formatInputThousands(row.usd)}" placeholder="">
           </td>
-          <td class="text-center" data-label="Aksi">
-            <button class="mini-btn delete-row-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}">
-              <i class="bi bi-trash3"></i>
-            </button>
+          <td class="text-center cost-row-actions-cell" data-label="Aksi">
+            <div class="cost-row-actions">
+              <button class="mini-btn cost-row-action-btn move-row-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" data-row-move="up" aria-label="Pindahkan biaya ${index + 1} ke atas" ${isFirstRow ? "disabled" : ""}>
+                <i class="bi bi-arrow-up"></i>
+              </button>
+              <button class="mini-btn cost-row-action-btn move-row-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" data-row-move="down" aria-label="Pindahkan biaya ${index + 1} ke bawah" ${isLastRow ? "disabled" : ""}>
+                <i class="bi bi-arrow-down"></i>
+              </button>
+              <button class="mini-btn cost-row-action-btn delete-row-btn danger-btn" type="button" data-cost-doc="${docType}" data-row-index="${index}" aria-label="Hapus biaya ${index + 1}">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </div>
           </td>
         `;
         tbody.appendChild(tr);
@@ -1421,6 +1535,26 @@ function deleteCostRowByIndex(docType, idx) {
     renderPreview();
 }
 
+function moveCostRow(docType, idx, direction) {
+    const costs = getCosts(docType);
+    const nextIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (!costs[idx] || !costs[nextIdx]) return;
+
+    if (docType === "realisasi") {
+        state.realisasiManualEdit = true;
+    }
+
+    const [movedRow] = costs.splice(idx, 1);
+    costs.splice(nextIdx, 0, movedRow);
+
+    if (docType === "ump") {
+        syncRealisasiCostsFromAdvance();
+    }
+
+    renderAllCostEditors();
+    renderPreview();
+}
+
 async function deleteCostRow(docType, idx) {
     const ok = await showConfirmDialog({
         title: "Hapus Biaya?",
@@ -1452,6 +1586,7 @@ function getCostDocLabel(docType) {
 
 function createBlankCostRow(type) {
     return {
+        id: createCostRowId(),
         type: type === "sub" ? "sub" : "item",
         description: type === "sub" ? "- " : "",
         rp: "",
@@ -1536,6 +1671,7 @@ function saveCostEditSheet() {
     }
 
     const nextRow = {
+        id: isNew ? createCostRowId() : row.id,
         type: elements.type.value === "sub" ? "sub" : "item",
         description: elements.description.value,
         rp: parseMaybeNumber(elements.rp.value),
@@ -1608,6 +1744,16 @@ function bindCostEditorEvents() {
             const editButton = event.target.closest(".mobile-cost-edit-btn");
             if (editButton) {
                 openCostEditSheet(editButton.dataset.costDoc, Number(editButton.dataset.rowIndex));
+                return;
+            }
+
+            const moveButton = event.target.closest(".move-row-btn");
+            if (moveButton) {
+                moveCostRow(
+                    moveButton.dataset.costDoc,
+                    Number(moveButton.dataset.rowIndex),
+                    moveButton.dataset.rowMove
+                );
                 return;
             }
 
