@@ -102,9 +102,131 @@ const DISPLAY_CASE = {
     proper: "proper",
     upper: "upper"
 };
+const COMPANY_FIELD_KEYS = new Set([
+    "companyName",
+    "realisasiCompanyName"
+]);
+const COMPANY_UPPERCASE_WORDS = new Set([
+    "PT",
+    "CV",
+    "PD",
+    "UD"
+]);
+const FIELD_CASE_MODES = Object.freeze({
+    companyName: DISPLAY_CASE.proper,
+    realisasiCompanyName: DISPLAY_CASE.proper,
+    department: DISPLAY_CASE.proper,
+    realisasiDepartment: DISPLAY_CASE.proper,
+    destination: DISPLAY_CASE.proper,
+    realisasiDestination: DISPLAY_CASE.proper,
+    purpose: DISPLAY_CASE.proper,
+    realisasiPurpose: DISPLAY_CASE.proper,
+    poNumber: DISPLAY_CASE.proper,
+    realisasiPoNumber: DISPLAY_CASE.proper,
+    installerName: DISPLAY_CASE.proper,
+    realisasiInstallerName: DISPLAY_CASE.proper,
+    salesName: DISPLAY_CASE.proper,
+    realisasiSalesName: DISPLAY_CASE.proper,
+    preparedBy: DISPLAY_CASE.proper,
+    checkedBy: DISPLAY_CASE.proper,
+    approvedBy: DISPLAY_CASE.proper
+});
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
+}
+
+function getFieldCaseMode(key) {
+    return FIELD_CASE_MODES[key] || DISPLAY_CASE.raw;
+}
+
+function normalizeTextCaseValue(value, mode = DISPLAY_CASE.raw) {
+    return formatDisplayText(value, mode);
+}
+
+function formatStrictProperCaseWord(word) {
+    return word
+        .toLocaleLowerCase("id-ID")
+        .replace(/(^|['’])\p{L}/gu, match => match.toLocaleUpperCase("id-ID"));
+}
+
+function formatCompanyCaseWord(word) {
+    const normalizedWord = word.toLocaleUpperCase("id-ID");
+    if (COMPANY_UPPERCASE_WORDS.has(normalizedWord)) {
+        return normalizedWord;
+    }
+
+    return formatStrictProperCaseWord(word);
+}
+
+function formatCompanyFieldValue(value) {
+    const text = String(value ?? "");
+    if (!text) return "";
+
+    return text.replace(/\S+/gu, token => {
+        if (!/\p{L}/u.test(token)) return token;
+        return token.replace(/\p{L}[\p{L}\p{M}'’]*/gu, word => formatCompanyCaseWord(word));
+    });
+}
+
+function normalizeStateFieldValue(key, value) {
+    if (COMPANY_FIELD_KEYS.has(key)) {
+        return formatCompanyFieldValue(value);
+    }
+
+    return normalizeTextCaseValue(value, getFieldCaseMode(key));
+}
+
+function normalizeCostFieldValue(field, value) {
+    if (field !== "description") {
+        return value;
+    }
+
+    return normalizeTextCaseValue(value, DISPLAY_CASE.proper);
+}
+
+function normalizeStateTextFields(targetState = state) {
+    Object.keys(FIELD_CASE_MODES).forEach(key => {
+        if (typeof targetState[key] === "string") {
+            targetState[key] = normalizeStateFieldValue(key, targetState[key]);
+        }
+    });
+}
+
+function setControlValuePreservingSelection(control, value) {
+    if (!control) return;
+
+    const nextValue = value ?? "";
+    if (control.value === nextValue) return;
+
+    let selectionStart = null;
+    let selectionEnd = null;
+    const canRestoreSelection = document.activeElement === control
+        && typeof control.setSelectionRange === "function";
+
+    if (canRestoreSelection) {
+        try {
+            selectionStart = control.selectionStart;
+            selectionEnd = control.selectionEnd;
+        } catch {
+            // Some controls do not expose selection APIs.
+            selectionStart = null;
+            selectionEnd = null;
+        }
+    }
+
+    control.value = nextValue;
+
+    if (canRestoreSelection && typeof selectionStart === "number" && typeof selectionEnd === "number") {
+        try {
+            control.setSelectionRange(
+                Math.min(selectionStart, nextValue.length),
+                Math.min(selectionEnd, nextValue.length)
+            );
+        } catch {
+            // Some controls cannot restore selection after value updates.
+        }
+    }
 }
 
 function createCostRowId() {
@@ -132,8 +254,9 @@ function getRealisasiManualMap() {
 }
 
 function updateSyncFieldValue(key, value) {
+    const normalizedValue = normalizeStateFieldValue(key, value);
     document.querySelectorAll(`.sync-field[data-key="${key}"]`).forEach(el => {
-        el.value = value ?? "";
+        setControlValuePreservingSelection(el, normalizedValue);
     });
 }
 
@@ -183,7 +306,10 @@ function syncSubmissionPeriodDisplay() {
 function getComparableCostRow(row = {}) {
     return {
         type: row?.type === "sub" ? "sub" : "item",
-        description: typeof row?.description === "string" ? row.description : "",
+        description: normalizeCostFieldValue(
+            "description",
+            typeof row?.description === "string" ? row.description : ""
+        ),
         rp: parseMaybeNumber(row?.rp),
         usd: parseMaybeNumber(row?.usd)
     };
@@ -573,6 +699,7 @@ function normalizeRealisasiInfoState(parsed = {}) {
 
 function applyStoredState(parsed = {}) {
     state = { ...clone(defaultState), ...parsed };
+    normalizeStateTextFields();
     normalizeRealisasiInfoState(parsed);
     const legacyCosts = Array.isArray(parsed.costs) ? normalizeCostRows(parsed.costs, defaultCostRows) : null;
     const hasRealisasiBaseCosts = Array.isArray(parsed.realisasiBaseCosts);
@@ -1180,7 +1307,9 @@ function fillStaticFields() {
     document.querySelectorAll(".sync-field").forEach(el => {
         const key = el.dataset.key;
         if (!key) return;
-        el.value = state[key] ?? "";
+        const normalizedValue = normalizeStateFieldValue(key, state[key]);
+        state[key] = normalizedValue;
+        setControlValuePreservingSelection(el, normalizedValue);
     });
 
     syncProjectDurationDisplay();
@@ -1203,7 +1332,7 @@ function syncMatchingFields(sourceEl) {
 
     document.querySelectorAll(".sync-field").forEach(el => {
         if (el !== sourceEl && el.dataset.key === key) {
-            el.value = state[key] ?? "";
+            setControlValuePreservingSelection(el, state[key] ?? "");
         }
     });
 
@@ -1250,7 +1379,9 @@ function bindStaticFields() {
     document.querySelectorAll(".sync-field").forEach(el => {
         const handleSync = () => {
             const key = el.dataset.key;
-            state[key] = el.value;
+            const normalizedValue = normalizeStateFieldValue(key, el.value);
+            setControlValuePreservingSelection(el, normalizedValue);
+            state[key] = normalizedValue;
             syncRealisasiDateDefault(key);
             syncRealisasiInfoDefault(key);
             syncProjectDurationDisplay();
@@ -1576,7 +1707,9 @@ function updateCostRowField(fieldEl) {
     if (field === "rp" || field === "usd") {
         costs[idx][field] = parseMaybeNumber(fieldEl.value);
     } else {
-        costs[idx][field] = fieldEl.value;
+        const normalizedValue = normalizeCostFieldValue(field, fieldEl.value);
+        setControlValuePreservingSelection(fieldEl, normalizedValue);
+        costs[idx][field] = normalizedValue;
     }
 
     if (docType === "ump" && syncRealisasiCostsFromAdvance()) {
@@ -1742,7 +1875,7 @@ function saveCostEditSheet() {
     const nextRow = {
         id: isNew ? createCostRowId() : row.id,
         type: elements.type.value === "sub" ? "sub" : "item",
-        description: elements.description.value,
+        description: normalizeCostFieldValue("description", elements.description.value),
         rp: parseMaybeNumber(elements.rp.value),
         usd: parseMaybeNumber(elements.usd.value)
     };
@@ -1847,6 +1980,11 @@ function bindCostEditSheetEvents() {
         document.getElementById(id)?.addEventListener("input", event => {
             setFormattedAmountValue(event.target);
         });
+    });
+
+    document.getElementById("costEditDescription")?.addEventListener("input", event => {
+        const normalizedValue = normalizeCostFieldValue("description", event.target.value);
+        setControlValuePreservingSelection(event.target, normalizedValue);
     });
 
     document.addEventListener("keydown", event => {
@@ -2577,7 +2715,7 @@ function drawVectorPdfHeader(pdf, data, cursor) {
     const y = VECTOR_PDF.marginTop;
 
     setPdfFont(pdf, 15, "bold");
-    pdf.text(String(data.companyName || "").toUpperCase(), x, y, { baseline: "top" });
+    pdf.text(String(data.companyName || "").toLocaleUpperCase("id-ID"), x, y, { baseline: "top" });
 
     setPdfFont(pdf, 10.5);
     drawPdfRightText(pdf, data.dateText, VECTOR_PDF.pageWidth - VECTOR_PDF.marginX, y + pxToPdfMm(18));
