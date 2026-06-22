@@ -1073,6 +1073,40 @@ function closeAboutModal() {
     document.body.classList.remove("about-modal-open");
 }
 
+const whatsNewModalState = {
+    lastFocused: null
+};
+
+function openWhatsNewModal() {
+    const modal = document.getElementById("whatsNewModal");
+    if (!modal || !isDesktopViewport()) return;
+    whatsNewModalState.lastFocused = document.activeElement;
+    modal.hidden = false;
+    document.body.classList.add("whats-new-modal-open");
+    document.getElementById("whatsNewDismissBtn")?.focus();
+}
+
+function closeWhatsNewModal(options = {}) {
+    const { restoreFocus = true } = options;
+    const modal = document.getElementById("whatsNewModal");
+    if (!modal || modal.hidden) return;
+
+    modal.hidden = true;
+    document.body.classList.remove("whats-new-modal-open");
+
+    const lastFocused = whatsNewModalState.lastFocused;
+    whatsNewModalState.lastFocused = null;
+
+    if (restoreFocus && lastFocused instanceof HTMLElement) {
+        lastFocused.focus();
+    }
+}
+
+function maybeOpenWhatsNewModal() {
+    if (!isDesktopViewport()) return;
+    openWhatsNewModal();
+}
+
 function getToastIcon(type) {
     if (type === "success") return "bi-check-circle-fill";
     if (type === "error" || type === "danger") return "bi-exclamation-circle-fill";
@@ -1242,6 +1276,22 @@ function bindAboutModalEvents() {
     document.addEventListener("keydown", event => {
         if (event.key === "Escape" && !modal.hidden) {
             closeAboutModal();
+        }
+    });
+}
+
+function bindWhatsNewModalEvents() {
+    const modal = document.getElementById("whatsNewModal");
+    if (!modal || modal.dataset.bound === "true") return;
+    modal.dataset.bound = "true";
+
+    document.getElementById("whatsNewModalCloseBtn")?.addEventListener("click", () => closeWhatsNewModal());
+    document.getElementById("whatsNewDismissBtn")?.addEventListener("click", () => closeWhatsNewModal());
+    document.getElementById("whatsNewModalBackdrop")?.addEventListener("click", () => closeWhatsNewModal());
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !modal.hidden) {
+            closeWhatsNewModal();
         }
     });
 }
@@ -3204,9 +3254,14 @@ function init() {
     bindCostEditSheetEvents();
     bindDraftModalEvents();
     bindAboutModalEvents();
+    bindWhatsNewModalEvents();
     setMobileActionMenuOpen(false);
     updatePreviewToggleButton();
+    maybeOpenWhatsNewModal();
     window.addEventListener("resize", () => {
+        if (isMobileActionMenuLayout()) {
+            closeWhatsNewModal({ restoreFocus: false });
+        }
         if (!isMobileActionMenuLayout()) {
             setMobileActionMenuOpen(false);
             document.body.classList.remove("mobile-preview-mode");

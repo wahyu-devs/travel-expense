@@ -678,6 +678,38 @@
         </div>
     </div>
 
+    <div class="whats-new-modal" id="whatsNewModal" hidden role="dialog" aria-modal="true"
+        aria-labelledby="whatsNewTitle" aria-describedby="whatsNewDesc">
+        <div class="whats-new-modal-backdrop" id="whatsNewModalBackdrop"></div>
+        <div class="whats-new-modal-panel">
+            <div class="whats-new-modal-head">
+                <div class="whats-new-modal-copy">
+                    <div class="whats-new-kicker">What's New</div>
+                    <div class="whats-new-modal-title" id="whatsNewTitle">The app has been updated</div>
+                    <div class="whats-new-modal-desc" id="whatsNewDesc">
+                        This release includes new features, improvements, and refinements across the app.
+                    </div>
+                </div>
+                <button id="whatsNewModalCloseBtn" class="icon-btn" type="button" aria-label="Close update notice">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="whats-new-modal-body">
+                <div class="whats-new-feature">
+                    <span class="whats-new-feature-no">01</span>
+                    <div class="whats-new-feature-copy">Expense rows now include move controls so items can be reordered more easily.</div>
+                </div>
+                <div class="whats-new-feature">
+                    <span class="whats-new-feature-no">02</span>
+                    <div class="whats-new-feature-copy">Input text now applies auto proper-case formatting directly in the form.</div>
+                </div>
+            </div>
+            <div class="whats-new-modal-actions">
+                <button id="whatsNewDismissBtn" class="primary-btn" type="button">Got it</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
 
     <div class="confirm-dialog" id="confirmDialog" hidden role="dialog" aria-modal="true"

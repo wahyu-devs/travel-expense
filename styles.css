@@ -1131,6 +1131,10 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     display: none;
 }
 
+.whats-new-modal[hidden] {
+    display: none;
+}
+
 @media (min-width: 1024px) {
     .about-modal {
         display: none !important;
@@ -1155,6 +1159,15 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     padding: 18px;
 }
 
+.whats-new-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1220;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+}
+
 .draft-modal-backdrop {
     position: absolute;
     inset: 0;
@@ -1165,6 +1178,14 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, .62);
+}
+
+.whats-new-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 8, 12, .56);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
 }
 
 .draft-modal-panel {
@@ -1189,6 +1210,17 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     background: var(--panel);
     color: var(--txt);
     box-shadow: 0 20px 48px rgba(0, 0, 0, .34);
+    overflow: hidden;
+}
+
+.whats-new-modal-panel {
+    position: relative;
+    width: min(520px, 100%);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--panel);
+    color: var(--txt);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, .42);
     overflow: hidden;
 }
 
@@ -1269,6 +1301,121 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     color: var(--txt);
     font-size: var(--fs-ui-md);
     line-height: 1.55;
+}
+
+.whats-new-modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 22px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+}
+
+.whats-new-modal-copy {
+    min-width: 0;
+}
+
+.whats-new-kicker {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid #315e99;
+    border-radius: 999px;
+    background: #22467a;
+    color: #e8f1ff;
+    font-size: var(--fs-ui-xs);
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.whats-new-modal-title {
+    margin-top: 14px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.08;
+}
+
+.whats-new-modal-desc {
+    margin-top: 8px;
+    max-width: 44ch;
+    color: var(--muted);
+    font-size: var(--fs-ui-base);
+    line-height: 1.55;
+}
+
+.whats-new-modal-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 18px 22px;
+}
+
+.whats-new-feature {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: start;
+    padding: 12px 13px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel-2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
+}
+
+.whats-new-feature-no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 8px;
+    border-radius: 10px;
+    background: #10284b;
+    color: #9bc4ff;
+    font-size: var(--fs-ui-xs);
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+.whats-new-feature-copy {
+    color: var(--txt);
+    font-size: var(--fs-ui-sm);
+    line-height: 1.55;
+}
+
+.whats-new-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 22px 22px;
+}
+
+html[data-theme="light"] .whats-new-modal-backdrop {
+    background: rgba(15, 23, 42, .18);
+}
+
+html[data-theme="light"] .whats-new-modal-panel {
+    background: var(--panel);
+    box-shadow: 0 26px 70px rgba(15, 23, 42, .16);
+}
+
+html[data-theme="light"] .whats-new-kicker {
+    background: #dceafe;
+    border-color: #bfd4fb;
+    color: #1750a7;
+}
+
+html[data-theme="light"] .whats-new-feature {
+    background: #fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5);
+}
+
+html[data-theme="light"] .whats-new-feature-no {
+    background: #dceafe;
+    color: #1750a7;
 }
 
 .about-lead {
@@ -1674,7 +1821,8 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     body.cost-edit-open,
     body.confirm-dialog-open,
     body.about-modal-open,
-    body.draft-modal-open {
+    body.draft-modal-open,
+    body.whats-new-modal-open {
         overflow: hidden;
     }
 
@@ -1926,6 +2074,10 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
     .about-modal {
         padding: 14px;
+    }
+
+    .whats-new-modal {
+        display: none !important;
     }
 
     .app-footer {
