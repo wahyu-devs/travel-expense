@@ -1215,9 +1215,9 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
 .whats-new-modal-panel {
     position: relative;
-    width: min(520px, 100%);
+    width: min(512px, 100%);
     border: 1px solid var(--line);
-    border-radius: 18px;
+    border-radius: 20px;
     background: var(--panel);
     color: var(--txt);
     box-shadow: 0 28px 80px rgba(0, 0, 0, .42);
@@ -1304,64 +1304,85 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 }
 
 .whats-new-modal-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 20px 22px 14px;
-    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 14px;
+    row-gap: 10px;
+    align-items: start;
+    padding: 17px 18px 14px;
+    border-bottom: 1px solid var(--line-soft);
     background: var(--panel);
 }
 
 .whats-new-modal-copy {
+    display: grid;
+    gap: 8px;
     min-width: 0;
 }
 
 .whats-new-kicker {
     display: inline-flex;
     align-items: center;
-    min-height: 28px;
-    padding: 0 10px;
+    justify-self: start;
+    min-height: 22px;
+    padding: 0 8px;
     border: 1px solid #315e99;
     border-radius: 999px;
     background: #22467a;
     color: #e8f1ff;
-    font-size: var(--fs-ui-xs);
+    font-size: .64rem;
     font-weight: 800;
-    letter-spacing: .08em;
+    letter-spacing: .1em;
     text-transform: uppercase;
 }
 
 .whats-new-modal-title {
-    margin-top: 14px;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 800;
+    letter-spacing: -.02em;
     line-height: 1.08;
 }
 
 .whats-new-modal-desc {
-    margin-top: 8px;
-    max-width: 44ch;
+    grid-column: 1 / -1;
     color: var(--muted);
-    font-size: var(--fs-ui-base);
-    line-height: 1.55;
+    font-size: .88rem;
+    line-height: 1.5;
+}
+
+.whats-new-modal-close {
+    width: 34px;
+    min-height: 34px;
+    border-color: var(--line-soft);
+    border-radius: 12px;
+    color: var(--muted);
+}
+
+.whats-new-modal-close i {
+    font-size: .92rem;
+    line-height: 1;
+}
+
+.whats-new-modal-close:hover {
+    background: var(--chip);
+    color: var(--txt);
 }
 
 .whats-new-modal-body {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-    padding: 18px 22px;
+    gap: 10px;
+    padding: 12px 18px 8px;
 }
 
 .whats-new-feature {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 12px;
-    align-items: start;
-    padding: 12px 13px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
+    align-items: center;
+    padding: 13px 14px;
+    border: 1px solid var(--line-soft);
+    border-radius: 13px;
     background: var(--panel-2);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
 }
@@ -1370,9 +1391,9 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 34px;
-    height: 34px;
-    padding: 0 8px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 7px;
     border-radius: 10px;
     background: #10284b;
     color: #9bc4ff;
@@ -1382,20 +1403,22 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 }
 
 .whats-new-feature-no i {
-    font-size: .98rem;
+    font-size: .88rem;
     line-height: 1;
 }
 
 .whats-new-feature-copy {
     color: var(--txt);
-    font-size: var(--fs-ui-sm);
-    line-height: 1.55;
+    font-size: .85rem;
+    font-weight: 500;
+    letter-spacing: -.01em;
+    line-height: 1.38;
 }
 
 .whats-new-modal-actions {
     display: flex;
     justify-content: flex-end;
-    padding: 0 22px 22px;
+    padding: 4px 20px 20px;
 }
 
 html[data-theme="light"] .whats-new-modal-backdrop {

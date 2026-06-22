@@ -1083,7 +1083,6 @@ function openWhatsNewModal() {
     whatsNewModalState.lastFocused = document.activeElement;
     modal.hidden = false;
     document.body.classList.add("whats-new-modal-open");
-    document.getElementById("whatsNewDismissBtn")?.focus();
 }
 
 function closeWhatsNewModal(options = {}) {
