@@ -1381,6 +1381,11 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     letter-spacing: .04em;
 }
 
+.whats-new-feature-no i {
+    font-size: .98rem;
+    line-height: 1;
+}
+
 .whats-new-feature-copy {
     color: var(--txt);
     font-size: var(--fs-ui-sm);
