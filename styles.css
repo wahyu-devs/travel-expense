@@ -1035,9 +1035,17 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 }
 
 .doc-cost thead th {
+    background: #204E78;
+    color: #fff;
     text-align: center;
     font-weight: 700;
     vertical-align: middle;
+}
+
+.doc-cost tfoot td {
+    background: #EEEEEE;
+    border-top: var(--preview-table-border-width, 0.2px) solid var(--doc-line);
+    color: #111;
 }
 
 .doc-cost .no-col {

@@ -2708,7 +2708,11 @@ const VECTOR_PDF = {
     pxToMm: 210 / 794,
     lineWidth: PDF_TABLE_LINE_WIDTH,
     tableLineColor: PDF_TABLE_LINE_COLOR,
-    textColor: 17
+    textColor: 17,
+    tableHeaderFillColor: [32, 78, 120],
+    tableHeaderTextColor: [255, 255, 255],
+    tableFooterFillColor: [238, 238, 238],
+    tableFooterTextColor: 17
 };
 
 function pxToPdfMm(px) {
@@ -2722,7 +2726,11 @@ function pdfFontHeight(fontSize, lineHeight = 1.25) {
 function setPdfFont(pdf, size, style = "normal", color = VECTOR_PDF.textColor) {
     pdf.setFont("helvetica", style);
     pdf.setFontSize(size);
-    pdf.setTextColor(color, color, color);
+    if (Array.isArray(color)) {
+        pdf.setTextColor(...color);
+    } else {
+        pdf.setTextColor(color, color, color);
+    }
 }
 
 function splitPdfText(pdf, value, width) {
@@ -2924,6 +2932,19 @@ function setVectorPdfTableLineStyle(pdf) {
     }
 }
 
+function setVectorPdfFillColor(pdf, color) {
+    if (Array.isArray(color)) {
+        pdf.setFillColor(...color);
+    } else {
+        pdf.setFillColor(color, color, color);
+    }
+}
+
+function fillVectorPdfTableRow(pdf, y, height, color) {
+    setVectorPdfFillColor(pdf, color);
+    pdf.rect(VECTOR_PDF.marginX, y, VECTOR_PDF.docWidth, height, "F");
+}
+
 function drawVectorPdfTableFrame(pdf, y, height, boundaries, drawTop = false) {
     setVectorPdfTableLineStyle(pdf);
 
@@ -2938,16 +2959,17 @@ function drawVectorPdfTableFrame(pdf, y, height, boundaries, drawTop = false) {
 }
 
 function drawVectorPdfCostHeader(pdf, cursor, columns, drawTop = true) {
-    const headerHeight = 13;
+    const headerHeight = 7.6;
     ensureVectorPdfSpace(pdf, cursor, headerHeight);
 
+    fillVectorPdfTableRow(pdf, cursor.y, headerHeight, VECTOR_PDF.tableHeaderFillColor);
     drawVectorPdfTableFrame(pdf, cursor.y, headerHeight, columns.boundaries, drawTop);
 
-    setPdfFont(pdf, 9.75, "bold");
-    drawPdfCenteredLines(pdf, ["NO."], columns.x, cursor.y, columns.no, headerHeight);
-    drawPdfCenteredLines(pdf, ["DESCRIPTION"], columns.x + columns.no, cursor.y, columns.desc, headerHeight);
-    drawPdfCenteredLines(pdf, ["AMOUNT", "Rp."], columns.rpX, cursor.y, columns.rp, headerHeight);
-    drawPdfCenteredLines(pdf, ["AMOUNT", "USD"], columns.usdX, cursor.y, columns.usd, headerHeight);
+    setPdfFont(pdf, 9.75, "bold", VECTOR_PDF.tableHeaderTextColor);
+    drawPdfCenteredLines(pdf, ["No."], columns.x, cursor.y, columns.no, headerHeight);
+    drawPdfCenteredLines(pdf, ["Description"], columns.x + columns.no, cursor.y, columns.desc, headerHeight);
+    drawPdfCenteredLines(pdf, ["Amount (Rp)"], columns.rpX, cursor.y, columns.rp, headerHeight);
+    drawPdfCenteredLines(pdf, ["Amount (USD)"], columns.usdX, cursor.y, columns.usd, headerHeight);
 
     cursor.y += headerHeight;
 }
@@ -3033,9 +3055,10 @@ function drawVectorPdfCostTable(pdf, data, cursor) {
         drawVectorPdfCostHeader(pdf, cursor, columns, true);
     }
 
-    drawVectorPdfTableFrame(pdf, cursor.y, footerHeight, columns.footerBoundaries, false);
-    setPdfFont(pdf, 9.75, "bold");
-    drawPdfCenteredLines(pdf, ["TOTAL"], columns.x, cursor.y, columns.no + columns.desc, footerHeight);
+    fillVectorPdfTableRow(pdf, cursor.y, footerHeight, VECTOR_PDF.tableFooterFillColor);
+    drawVectorPdfTableFrame(pdf, cursor.y, footerHeight, columns.footerBoundaries, true);
+    setPdfFont(pdf, 9.75, "bold", VECTOR_PDF.tableFooterTextColor);
+    drawPdfCenteredLines(pdf, ["Total"], columns.x, cursor.y, columns.no + columns.desc, footerHeight);
     drawPdfRightText(
         pdf,
         formatNumber(data.activeTotals.rp),
