@@ -813,6 +813,22 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     background: transparent;
 }
 
+.company-logo-input-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 40px;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.company-logo-clear-btn {
+    width: 40px;
+    min-height: 40px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .signature-preview-mini {
     width: 100%;
     max-width: 160px;
@@ -938,6 +954,31 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     font-weight: 700;
     letter-spacing: .2px;
     text-transform: uppercase;
+}
+
+.doc-brand {
+    min-width: 0;
+    min-height: 36px;
+}
+
+.doc-brand.has-logo {
+    min-height: 76px;
+}
+
+.doc-brand.has-logo .doc-company {
+    display: none;
+}
+
+.doc-company-logo {
+    max-width: 420px;
+    max-height: 76px;
+    object-fit: contain;
+    object-position: left top;
+    display: none;
+}
+
+.doc-company-logo.has-image {
+    display: block;
 }
 
 .doc-date {
@@ -2599,6 +2640,17 @@ html[data-theme="light"] .whats-new-feature-no {
     .signature-preview-mini {
         max-width: none;
         height: 72px;
+    }
+
+    .company-logo-input-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 44px;
+        align-items: stretch;
+    }
+
+    .company-logo-clear-btn {
+        width: 44px;
+        min-height: 44px;
     }
 
     .delete-sign-btn {

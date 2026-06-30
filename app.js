@@ -1,6 +1,7 @@
 const STORAGE_KEY = "travel_form_bootstrap_current_v5";
 const DRAFTS_STORAGE_KEY = "travel_form_project_drafts_v1";
 const THEME_KEY = "travel_form_bootstrap_theme_v2";
+const DEFAULT_COMPANY_LOGO = "./assets/img/company-logo.png";
 const LEGACY_STORAGE_KEYS = [
     "travel_form_bootstrap_v2",
     "travel_form_bootstrap_v3",
@@ -26,6 +27,8 @@ const defaultCostRows = [];
 const defaultState = {
     companyName: "PT. Perkom Indah Murni",
     realisasiCompanyName: "PT. Perkom Indah Murni",
+    companyLogo: "",
+    companyLogoUseDefault: true,
     docDate: "",
     realisasiDocDate: "",
     department: "",
@@ -479,6 +482,8 @@ function createResetState() {
         realisasiInstallerName: "",
         salesName: "",
         realisasiSalesName: "",
+        companyLogo: "",
+        companyLogoUseDefault: true,
         preparedBy: "",
         checkedBy: "",
         preparedSign: "",
@@ -697,9 +702,25 @@ function normalizeRealisasiInfoState(parsed = {}) {
     state.realisasiInfoManualEdit = nextManualMap;
 }
 
+function normalizeCompanyLogoState(parsed = {}) {
+    if (state.companyLogo === DEFAULT_COMPANY_LOGO) {
+        state.companyLogo = "";
+        state.companyLogoUseDefault = true;
+        return;
+    }
+
+    if (hasOwnValue(parsed, "companyLogoUseDefault")) {
+        state.companyLogoUseDefault = Boolean(state.companyLogoUseDefault);
+        return;
+    }
+
+    state.companyLogoUseDefault = !state.companyLogo;
+}
+
 function applyStoredState(parsed = {}) {
     state = { ...clone(defaultState), ...parsed };
     normalizeStateTextFields();
+    normalizeCompanyLogoState(parsed);
     normalizeRealisasiInfoState(parsed);
     const legacyCosts = Array.isArray(parsed.costs) ? normalizeCostRows(parsed.costs, defaultCostRows) : null;
     const hasRealisasiBaseCosts = Array.isArray(parsed.realisasiBaseCosts);
@@ -1370,6 +1391,7 @@ function fillStaticFields() {
     });
 
     syncRealisasiSummaryValues();
+    updateCompanyLogoControls(getCompanyLogoSource());
     updateMiniSignaturePreview("preparedSign", state.preparedSign);
     updateMiniSignaturePreview("checkedSign", state.checkedSign);
     updateMiniSignaturePreview("approvedSign", state.approvedSign);
@@ -2081,6 +2103,50 @@ function updateMiniSignaturePreview(key, value) {
     }
 }
 
+function getCompanyLogoSource(targetState = state) {
+    if (targetState.companyLogo) {
+        return targetState.companyLogo;
+    }
+
+    return targetState.companyLogoUseDefault === false ? "" : DEFAULT_COMPANY_LOGO;
+}
+
+function updateCompanyLogoControls(value) {
+    document.querySelectorAll(".company-logo-clear-btn").forEach(btn => {
+        btn.disabled = !value;
+    });
+}
+
+function bindCompanyLogoInputs() {
+    document.querySelectorAll(".company-logo-input").forEach(input => {
+        input.addEventListener("change", (event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                state.companyLogo = reader.result;
+                state.companyLogoUseDefault = false;
+                updateCompanyLogoControls(getCompanyLogoSource());
+                renderPreview();
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    document.querySelectorAll(".company-logo-clear-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            state.companyLogo = "";
+            state.companyLogoUseDefault = false;
+            updateCompanyLogoControls(getCompanyLogoSource());
+            document.querySelectorAll(".company-logo-input").forEach(input => {
+                input.value = "";
+            });
+            renderPreview();
+        });
+    });
+}
+
 function bindSignatureInputs() {
     document.querySelectorAll(".signature-input").forEach(input => {
         input.addEventListener("change", async (e) => {
@@ -2125,6 +2191,26 @@ function setSignImage(id, value) {
         img.removeAttribute("src");
         img.classList.remove("has-image");
     }
+}
+
+function setCompanyBrand(companyName, logo) {
+    const brand = document.getElementById("pvCompanyBrand");
+    const name = document.getElementById("pvCompanyName");
+    const image = document.getElementById("pvCompanyLogo");
+    if (!brand || !name || !image) return;
+
+    if (logo) {
+        image.src = logo;
+        image.classList.add("has-image");
+        brand.classList.add("has-logo");
+        name.textContent = "";
+        return;
+    }
+
+    image.removeAttribute("src");
+    image.classList.remove("has-image");
+    brand.classList.remove("has-logo");
+    name.textContent = companyName ?? "";
 }
 
 function getActiveDocType() {
@@ -2248,7 +2334,7 @@ function renderPreview() {
             : "Lengkapi data perjalanan, biaya pengajuan, dan tanda tangan. Total pada tab ini digunakan sebagai receipt pada Realisasi."
     );
 
-    setText("pvCompanyName", getPreviewInfoDisplayValue(docType, "companyName"));
+    setCompanyBrand(getPreviewInfoDisplayValue(docType, "companyName"), getCompanyLogoSource());
     const previewDocDate = getPreviewDocDate(docType);
     setText("pvDate", previewDocDate ? "Tanggal " + formatDateIndo(previewDocDate) : "Tanggal");
     setText("pvTitle", docType === "realisasi" ? "BIAYA PERJALANAN" : "UANG MUKA PERJALANAN");
@@ -2712,6 +2798,7 @@ function getVectorPdfData(docType = getActiveDocType()) {
     return {
         docType,
         companyName: getPreviewInfoDisplayValue(docType, "companyName"),
+        companyLogo: getCompanyLogoSource(),
         dateText: previewDocDate ? `Tanggal ${formatDateIndo(previewDocDate)}` : "Tanggal",
         title: docType === "realisasi" ? "BIAYA PERJALANAN" : "UANG MUKA PERJALANAN",
         infoRows: [
@@ -2759,17 +2846,33 @@ function getVectorPdfData(docType = getActiveDocType()) {
     };
 }
 
-function drawVectorPdfHeader(pdf, data, cursor) {
+function drawVectorPdfHeader(pdf, data, cursor, companyLogoImage) {
     const x = VECTOR_PDF.marginX;
     const y = VECTOR_PDF.marginTop;
 
-    setPdfFont(pdf, 15, "bold");
-    pdf.text(String(data.companyName || "").toLocaleUpperCase("id-ID"), x, y, { baseline: "top" });
+    if (companyLogoImage) {
+        const imageMaxWidth = pxToPdfMm(420);
+        const imageMaxHeight = pxToPdfMm(76);
+        const fitScale = Math.min(imageMaxWidth / companyLogoImage.width, imageMaxHeight / companyLogoImage.height);
+        const imageWidth = companyLogoImage.width * fitScale;
+        const imageHeight = companyLogoImage.height * fitScale;
+        pdf.addImage(
+            companyLogoImage.data,
+            companyLogoImage.format,
+            x,
+            y,
+            imageWidth,
+            imageHeight
+        );
+    } else {
+        setPdfFont(pdf, 15, "bold");
+        pdf.text(String(data.companyName || "").toLocaleUpperCase("id-ID"), x, y, { baseline: "top" });
+    }
 
     setPdfFont(pdf, 10.5);
     drawPdfRightText(pdf, data.dateText, VECTOR_PDF.pageWidth - VECTOR_PDF.marginX, y + pxToPdfMm(18));
 
-    cursor.y = y + pxToPdfMm(74);
+    cursor.y = y + pxToPdfMm(companyLogoImage ? 114 : 74);
 
     setPdfFont(pdf, 13.5, "bold");
     pdf.text(data.title, VECTOR_PDF.pageWidth / 2, cursor.y, {
@@ -3045,13 +3148,17 @@ function getPdfImageInfo(source) {
                 return;
             }
 
-            context.drawImage(image, 0, 0, canvas.width, canvas.height);
-            resolve({
-                data: canvas.toDataURL("image/png"),
-                format: "PNG",
-                width: canvas.width,
-                height: canvas.height
-            });
+            try {
+                context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                resolve({
+                    data: canvas.toDataURL("image/png"),
+                    format: "PNG",
+                    width: canvas.width,
+                    height: canvas.height
+                });
+            } catch {
+                resolve(null);
+            }
         };
         image.onerror = () => resolve(null);
         image.src = source;
@@ -3142,10 +3249,13 @@ async function buildVectorPdfDocument(options = {}) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF("p", "mm", "a4");
     const data = getVectorPdfData();
-    const signatureImages = await getVectorPdfSignatureImages(data);
+    const [companyLogoImage, signatureImages] = await Promise.all([
+        getPdfImageInfo(data.companyLogo),
+        getVectorPdfSignatureImages(data)
+    ]);
     const cursor = { y: VECTOR_PDF.marginTop };
 
-    drawVectorPdfHeader(pdf, data, cursor);
+    drawVectorPdfHeader(pdf, data, cursor, companyLogoImage);
     drawVectorPdfInfoRows(pdf, data, cursor);
     drawVectorPdfCostTable(pdf, data, cursor);
     drawVectorPdfNote(pdf, data, cursor);
@@ -3243,6 +3353,7 @@ function init() {
     loadState();
     bindStaticFields();
     renderCurrentState();
+    bindCompanyLogoInputs();
     bindSignatureInputs();
     bindTabsAndSteps();
     bindTopActions();

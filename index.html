@@ -131,6 +131,16 @@
                                         <input type="text" class="form-control sync-field" data-key="companyName">
                                     </div>
                                     <div class="col-md-6">
+                                        <label class="form-label">Logo Perusahaan</label>
+                                        <div class="company-logo-input-row">
+                                            <input type="file" class="form-control company-logo-input" accept="image/*">
+                                            <button class="mini-btn company-logo-clear-btn" type="button"
+                                                aria-label="Hapus logo perusahaan">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
                                         <label class="form-label">Tanggal Pengajuan</label>
                                         <input type="date" class="form-control sync-field" data-key="docDate">
                                     </div>
@@ -311,6 +321,16 @@
                                         <input type="text" class="form-control sync-field" data-key="realisasiCompanyName">
                                     </div>
                                     <div class="col-md-6">
+                                        <label class="form-label">Logo Perusahaan</label>
+                                        <div class="company-logo-input-row">
+                                            <input type="file" class="form-control company-logo-input" accept="image/*">
+                                            <button class="mini-btn company-logo-clear-btn" type="button"
+                                                aria-label="Hapus logo perusahaan">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
                                         <label class="form-label">Tanggal Realisasi</label>
                                         <input type="date" class="form-control sync-field" data-key="realisasiDocDate">
                                     </div>
@@ -468,7 +488,10 @@
                         <div class="preview-stage" id="previewStage">
                             <div id="previewDocument" class="doc-page">
                                 <div class="doc-top">
-                                    <div class="doc-company" id="pvCompanyName">PT. PERKOM INDAH MURNI</div>
+                                    <div class="doc-brand" id="pvCompanyBrand">
+                                        <div class="doc-company" id="pvCompanyName">PT. PERKOM INDAH MURNI</div>
+                                        <img id="pvCompanyLogo" class="doc-company-logo" alt="Logo Perusahaan">
+                                    </div>
                                     <div class="doc-date" id="pvDate">Tanggal</div>
                                 </div>
 
