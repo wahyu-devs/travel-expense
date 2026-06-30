@@ -1100,7 +1100,7 @@ const whatsNewModalState = {
 
 function openWhatsNewModal() {
     const modal = document.getElementById("whatsNewModal");
-    if (!modal || !isDesktopViewport()) return;
+    if (!modal) return;
     whatsNewModalState.lastFocused = document.activeElement;
     modal.hidden = false;
     document.body.classList.add("whats-new-modal-open");
@@ -1123,7 +1123,6 @@ function closeWhatsNewModal(options = {}) {
 }
 
 function maybeOpenWhatsNewModal() {
-    if (!isDesktopViewport()) return;
     openWhatsNewModal();
 }
 
@@ -3392,9 +3391,6 @@ function init() {
     updatePreviewToggleButton();
     maybeOpenWhatsNewModal();
     window.addEventListener("resize", () => {
-        if (isMobileActionMenuLayout()) {
-            closeWhatsNewModal({ restoreFocus: false });
-        }
         if (!isMobileActionMenuLayout()) {
             setMobileActionMenuOpen(false);
             document.body.classList.remove("mobile-preview-mode");
