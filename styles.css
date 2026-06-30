@@ -1357,7 +1357,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
 .whats-new-modal-copy {
     display: grid;
-    gap: 10px;
+    gap: 12px;
     min-width: 0;
 }
 
