@@ -1440,7 +1440,7 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 .whats-new-feature-platform-badge {
     position: absolute;
     top: -8px;
-    right: -8px;
+    right: 0;
     z-index: 1;
     min-height: 16px;
     padding: 0 5px;
