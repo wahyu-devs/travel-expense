@@ -958,11 +958,11 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 
 .doc-brand {
     min-width: 0;
-    min-height: 36px;
+    min-height: 76px;
 }
 
-.doc-brand.has-logo {
-    min-height: 76px;
+.doc-brand:not(.has-logo) .doc-company {
+    padding-top: 18px;
 }
 
 .doc-brand.has-logo .doc-company {

@@ -2873,13 +2873,15 @@ function drawVectorPdfHeader(pdf, data, cursor, companyLogoImage) {
         );
     } else {
         setPdfFont(pdf, 15, "bold");
-        pdf.text(String(data.companyName || "").toLocaleUpperCase("id-ID"), x, y, { baseline: "top" });
+        pdf.text(String(data.companyName || "").toLocaleUpperCase("id-ID"), x, y + pxToPdfMm(18), {
+            baseline: "top"
+        });
     }
 
     setPdfFont(pdf, 10.5);
     drawPdfRightText(pdf, data.dateText, VECTOR_PDF.pageWidth - VECTOR_PDF.marginX, y + pxToPdfMm(18));
 
-    cursor.y = y + pxToPdfMm(companyLogoImage ? 114 : 74);
+    cursor.y = y + pxToPdfMm(114);
 
     setPdfFont(pdf, 13.5, "bold");
     pdf.text(data.title, VECTOR_PDF.pageWidth / 2, cursor.y, {
@@ -2967,8 +2969,8 @@ function drawVectorPdfCostHeader(pdf, cursor, columns, drawTop = true) {
     setPdfFont(pdf, 9.75, "bold", VECTOR_PDF.tableHeaderTextColor);
     drawPdfCenteredLines(pdf, ["No."], columns.x, cursor.y, columns.no, headerHeight);
     drawPdfCenteredLines(pdf, ["Description"], columns.x + columns.no, cursor.y, columns.desc, headerHeight);
-    drawPdfCenteredLines(pdf, ["Amount (Rp)"], columns.rpX, cursor.y, columns.rp, headerHeight);
-    drawPdfCenteredLines(pdf, ["Amount (USD)"], columns.usdX, cursor.y, columns.usd, headerHeight);
+    drawPdfCenteredLines(pdf, ["Total (Rp)"], columns.rpX, cursor.y, columns.rp, headerHeight);
+    drawPdfCenteredLines(pdf, ["Total (USD)"], columns.usdX, cursor.y, columns.usd, headerHeight);
 
     cursor.y += headerHeight;
 }
@@ -3057,7 +3059,7 @@ function drawVectorPdfCostTable(pdf, data, cursor) {
     fillVectorPdfTableRow(pdf, cursor.y, footerHeight, VECTOR_PDF.tableFooterFillColor);
     drawVectorPdfTableFrame(pdf, cursor.y, footerHeight, columns.footerBoundaries, true);
     setPdfFont(pdf, 9.75, "bold", VECTOR_PDF.tableFooterTextColor);
-    drawPdfCenteredLines(pdf, ["Total"], columns.x, cursor.y, columns.no + columns.desc, footerHeight);
+    drawPdfCenteredLines(pdf, ["Grand Total"], columns.x, cursor.y, columns.no + columns.desc, footerHeight);
     drawPdfRightText(
         pdf,
         formatNumber(data.activeTotals.rp),
