@@ -105,6 +105,7 @@ const PREVIEW_PAGE_HEIGHT = 1123;
 const PREVIEW_PAGE_GAP = 20;
 const PREVIEW_PAGE_CONTENT_BOTTOM = 1058;
 const PREVIEW_FOOTER_TEXT = "Travel Expense by Wahyu";
+const PAGE_FOOTER_LABEL = "Page";
 const DISPLAY_CASE = {
     raw: "raw",
     proper: "proper",
@@ -2367,10 +2368,17 @@ function createPreviewPage() {
 
     const footer = document.createElement("div");
     footer.className = "doc-footer preview-page-footer";
-    footer.textContent = PREVIEW_FOOTER_TEXT;
+    footer.innerHTML = `
+        <span class="doc-footer-center">${PREVIEW_FOOTER_TEXT}</span>
+        <span class="doc-footer-page"></span>
+    `;
     page.appendChild(footer);
 
     return page;
+}
+
+function getPageFooterText(pageNumber, pageCount) {
+    return `${PAGE_FOOTER_LABEL} ${pageNumber} of ${pageCount}`;
 }
 
 function addPreviewPage(pages, container) {
@@ -2541,6 +2549,14 @@ function paginatePreviewDocument() {
     } else {
         stage.style.removeProperty("--preview-scale");
     }
+
+    pages.forEach((previewPage, index) => {
+        const pageNumber = index + 1;
+        const pageLabel = previewPage.querySelector(".doc-footer-page");
+        if (pageLabel) {
+            pageLabel.textContent = getPageFooterText(pageNumber, pages.length);
+        }
+    });
 
     stage.classList.add("has-preview-pages");
 }
@@ -3534,11 +3550,15 @@ function drawVectorPdfSignatures(pdf, data, signatureImages, cursor) {
     cursor.y += sectionHeight;
 }
 
-function drawVectorPdfFooter(pdf) {
+function drawVectorPdfFooter(pdf, pageNumber, pageCount) {
     const footerY = VECTOR_PDF.pageHeight - VECTOR_PDF.footerBottomOffset;
     setPdfFont(pdf, 7.5, "normal", 119);
-    pdf.text("Travel Expense by Wahyu", VECTOR_PDF.pageWidth / 2, footerY, {
+    pdf.text(PREVIEW_FOOTER_TEXT, VECTOR_PDF.pageWidth / 2, footerY, {
         align: "center",
+        baseline: "top"
+    });
+    pdf.text(getPageFooterText(pageNumber, pageCount), VECTOR_PDF.pageWidth - VECTOR_PDF.marginX, footerY, {
+        align: "right",
         baseline: "top"
     });
 }
@@ -3547,7 +3567,7 @@ function drawVectorPdfFooters(pdf) {
     const pageCount = pdf.getNumberOfPages();
     for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
         pdf.setPage(pageNumber);
-        drawVectorPdfFooter(pdf);
+        drawVectorPdfFooter(pdf, pageNumber, pageCount);
     }
     pdf.setPage(pageCount);
 }
