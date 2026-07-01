@@ -153,7 +153,11 @@ function formatStrictProperCaseWord(word) {
         .replace(/(^|['’])\p{L}/gu, match => match.toLocaleUpperCase("id-ID"));
 }
 
-function formatCompanyCaseWord(word) {
+function formatCompanyCaseWord(word, options = {}) {
+    if (options.preserveLowercaseX && word.toLocaleLowerCase("id-ID") === "x") {
+        return "x";
+    }
+
     const normalizedWord = word.toLocaleUpperCase("id-ID");
     if (COMPANY_UPPERCASE_WORDS.has(normalizedWord)) {
         return normalizedWord;
@@ -166,9 +170,13 @@ function formatCompanyFieldValue(value) {
     const text = String(value ?? "");
     if (!text) return "";
 
-    return text.replace(/\S+/gu, token => {
+    return text.replace(/\S+/gu, (token, tokenOffset) => {
         if (!/\p{L}/u.test(token)) return token;
-        return token.replace(/\p{L}[\p{L}\p{M}'’]*/gu, word => formatCompanyCaseWord(word));
+        return token.replace(/\p{L}[\p{L}\p{M}'’]*/gu, (word, wordOffset) => (
+            formatCompanyCaseWord(word, {
+                preserveLowercaseX: hasPreviousNonSpaceCharacter(text, tokenOffset + wordOffset)
+            })
+        ));
     });
 }
 
@@ -194,6 +202,35 @@ function normalizeStateTextFields(targetState = state) {
             targetState[key] = normalizeStateFieldValue(key, targetState[key]);
         }
     });
+}
+
+function normalizeStoredCostRowTextFields(row) {
+    if (!row || typeof row !== "object") {
+        return row;
+    }
+
+    return {
+        ...row,
+        description: normalizeCostFieldValue(
+            "description",
+            typeof row.description === "string" ? row.description : ""
+        )
+    };
+}
+
+function normalizeStoredStateTextSnapshot(storedState) {
+    const nextState = storedState && typeof storedState === "object"
+        ? clone(storedState)
+        : clone(defaultState);
+
+    normalizeStateTextFields(nextState);
+    ["costs", "advanceCosts", "realisasiBaseCosts", "realisasiCosts"].forEach(key => {
+        if (Array.isArray(nextState[key])) {
+            nextState[key] = nextState[key].map(normalizeStoredCostRowTextFields);
+        }
+    });
+
+    return nextState;
 }
 
 function setControlValuePreservingSelection(control, value) {
@@ -533,7 +570,7 @@ function formatDisplayText(value, mode = DISPLAY_CASE.raw) {
         return text;
     }
 
-    return text.replace(/\S+/gu, token => formatProperCaseToken(token));
+    return text.replace(/\S+/gu, (token, tokenOffset) => formatProperCaseToken(token, text, tokenOffset));
 }
 
 function formatSubmissionPeriodDisplayText(value) {
@@ -541,13 +578,25 @@ function formatSubmissionPeriodDisplayText(value) {
         .replace(/\bS\/D\b/gu, "s/d");
 }
 
-function formatProperCaseToken(token) {
-    if (!/\p{L}/u.test(token)) return token;
-
-    return token.replace(/\p{L}[\p{L}\p{M}'’]*/gu, word => formatProperCaseWord(word));
+function hasPreviousNonSpaceCharacter(text, offset) {
+    return /\S/u.test(String(text ?? "").slice(0, offset));
 }
 
-function formatProperCaseWord(word) {
+function formatProperCaseToken(token, sourceText = token, tokenOffset = 0) {
+    if (!/\p{L}/u.test(token)) return token;
+
+    return token.replace(/\p{L}[\p{L}\p{M}'’]*/gu, (word, wordOffset) => (
+        formatProperCaseWord(word, {
+            preserveLowercaseX: hasPreviousNonSpaceCharacter(sourceText, tokenOffset + wordOffset)
+        })
+    ));
+}
+
+function formatProperCaseWord(word, options = {}) {
+    if (options.preserveLowercaseX && word.toLocaleLowerCase("id-ID") === "x") {
+        return "x";
+    }
+
     if (isUppercaseWord(word)) {
         return word;
     }
@@ -803,6 +852,9 @@ function loadState(options = {}) {
     try {
         const parsed = JSON.parse(raw);
         applyStoredState(parsed);
+        if (JSON.stringify(state) !== raw) {
+            saveState();
+        }
         return { ok: true, loaded: true };
     } catch (error) {
         console.error("Draft tersimpan tidak bisa dibaca.", error);
@@ -878,7 +930,7 @@ function normalizeDraftEntry(entry) {
         documentName: cleanDraftLabel(entry?.documentName, ""),
         createdAt: cleanDraftLabel(entry?.createdAt, entry?.updatedAt || now),
         updatedAt: cleanDraftLabel(entry?.updatedAt, entry?.createdAt || now),
-        state: entry?.state && typeof entry.state === "object" ? entry.state : clone(defaultState)
+        state: normalizeStoredStateTextSnapshot(entry?.state)
     };
 }
 
@@ -898,10 +950,12 @@ function readDraftEntries() {
             };
         }
 
-        return {
-            ok: true,
-            drafts: parsed.map(normalizeDraftEntry)
-        };
+        const drafts = parsed.map(normalizeDraftEntry);
+        if (JSON.stringify(drafts) !== JSON.stringify(parsed)) {
+            writeDraftEntries(drafts);
+        }
+
+        return { ok: true, drafts };
     } catch (error) {
         console.error("Gagal membaca daftar draft.", error);
         return {
