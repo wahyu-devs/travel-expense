@@ -100,6 +100,11 @@ const PREVIEW_TABLE_VISIBLE_BORDER_WIDTH = 0.3;
 const PREVIEW_TABLE_MAX_BORDER_WIDTH = 0.8;
 const PREVIEW_TABLE_MOBILE_VISIBLE_BORDER_WIDTH = 0.5;
 const PREVIEW_TABLE_MOBILE_MAX_BORDER_WIDTH = 2.6;
+const PREVIEW_PAGE_WIDTH = 794;
+const PREVIEW_PAGE_HEIGHT = 1123;
+const PREVIEW_PAGE_GAP = 20;
+const PREVIEW_PAGE_CONTENT_BOTTOM = 1058;
+const PREVIEW_FOOTER_TEXT = "Travel Expense by Wahyu";
 const DISPLAY_CASE = {
     raw: "raw",
     proper: "proper",
@@ -2326,6 +2331,225 @@ function renderPreviewCosts(docType = getActiveDocType()) {
     });
 }
 
+function isPreviewUnavailable() {
+    return document.body.classList.contains("preview-hidden")
+        || (isMobileActionMenuLayout() && !document.body.classList.contains("mobile-preview-mode"));
+}
+
+function removePreviewCloneIds(root) {
+    if (root instanceof Element) {
+        root.removeAttribute("id");
+    }
+
+    root.querySelectorAll?.("[id]").forEach(el => el.removeAttribute("id"));
+    return root;
+}
+
+function clonePreviewElement(element) {
+    return removePreviewCloneIds(element.cloneNode(true));
+}
+
+function getPreviewPagesContainer(stage) {
+    let container = document.getElementById("previewPages");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "previewPages";
+        container.className = "preview-pages";
+        stage.appendChild(container);
+    }
+
+    return container;
+}
+
+function createPreviewPage() {
+    const page = document.createElement("div");
+    page.className = "doc-page preview-page-clone";
+
+    const footer = document.createElement("div");
+    footer.className = "doc-footer preview-page-footer";
+    footer.textContent = PREVIEW_FOOTER_TEXT;
+    page.appendChild(footer);
+
+    return page;
+}
+
+function addPreviewPage(pages, container) {
+    const page = createPreviewPage();
+    pages.push(page);
+    container?.appendChild(page);
+    return page;
+}
+
+function getPreviewPageContentChildren(page) {
+    return Array.from(page.children).filter(child => !child.classList.contains("preview-page-footer"));
+}
+
+function isPreviewPageEmpty(page) {
+    return getPreviewPageContentChildren(page).length === 0;
+}
+
+function isPreviewPageCostTableOnly(page, table) {
+    const children = getPreviewPageContentChildren(page);
+    return children.length === 1 && children[0] === table;
+}
+
+function getPreviewElementBottom(element, page) {
+    const elementRect = element.getBoundingClientRect();
+    const pageRect = page.getBoundingClientRect();
+    const style = window.getComputedStyle(element);
+    const marginBottom = parseFloat(style.marginBottom) || 0;
+
+    return elementRect.bottom - pageRect.top + marginBottom;
+}
+
+function getPreviewPageFlowBottom(page) {
+    const children = getPreviewPageContentChildren(page);
+    const lastChild = children[children.length - 1];
+
+    return lastChild ? getPreviewElementBottom(lastChild, page) : 0;
+}
+
+function isPreviewPageContentWithinBounds(page) {
+    return getPreviewPageFlowBottom(page) <= PREVIEW_PAGE_CONTENT_BOTTOM;
+}
+
+function appendPreviewContent(page, element, options = {}) {
+    const footer = page.querySelector(".preview-page-footer");
+    page.insertBefore(element, footer);
+
+    if (options.allowOverflow || isPreviewPageContentWithinBounds(page)) {
+        return true;
+    }
+
+    element.remove();
+    return false;
+}
+
+function createPreviewCostTable(sourceTable, includeFooter = false) {
+    const table = sourceTable.cloneNode(false);
+    removePreviewCloneIds(table);
+
+    const thead = sourceTable.querySelector("thead");
+    if (thead) {
+        table.appendChild(clonePreviewElement(thead));
+    }
+
+    table.appendChild(document.createElement("tbody"));
+
+    const tfoot = sourceTable.querySelector("tfoot");
+    if (includeFooter && tfoot) {
+        table.appendChild(clonePreviewElement(tfoot));
+    }
+
+    return table;
+}
+
+function appendPreviewCostTableShell(sourceTable, page, pages, container, includeFooter = false) {
+    let table = createPreviewCostTable(sourceTable, includeFooter);
+
+    if (!appendPreviewContent(page, table)) {
+        if (isPreviewPageEmpty(page)) {
+            appendPreviewContent(page, table, { allowOverflow: true });
+        } else {
+            page = addPreviewPage(pages, container);
+            table = createPreviewCostTable(sourceTable, includeFooter);
+            appendPreviewContent(page, table, { allowOverflow: true });
+        }
+    }
+
+    return { page, table, tbody: table.querySelector("tbody") };
+}
+
+function paginatePreviewCostTable(sourceTable, page, pages, container) {
+    let tableState = appendPreviewCostTableShell(sourceTable, page, pages, container);
+    page = tableState.page;
+
+    sourceTable.querySelectorAll("tbody tr").forEach(sourceRow => {
+        const row = clonePreviewElement(sourceRow);
+        tableState.tbody.appendChild(row);
+
+        if (isPreviewPageContentWithinBounds(page)) {
+            return;
+        }
+
+        row.remove();
+
+        if (!tableState.tbody.children.length && isPreviewPageCostTableOnly(page, tableState.table)) {
+            tableState.tbody.appendChild(row);
+            return;
+        }
+
+        page = addPreviewPage(pages, container);
+        tableState = appendPreviewCostTableShell(sourceTable, page, pages, container);
+        page = tableState.page;
+        tableState.tbody.appendChild(row);
+    });
+
+    const footer = sourceTable.querySelector("tfoot");
+    if (footer) {
+        const footerClone = clonePreviewElement(footer);
+        tableState.table.appendChild(footerClone);
+
+        if (!isPreviewPageContentWithinBounds(page)) {
+            footerClone.remove();
+            page = addPreviewPage(pages, container);
+            tableState = appendPreviewCostTableShell(sourceTable, page, pages, container, true);
+            page = tableState.page;
+        }
+    }
+
+    return page;
+}
+
+function paginatePreviewDocument() {
+    const stage = document.getElementById("previewStage");
+    const source = document.getElementById("previewDocument");
+    if (!stage || !source || isPreviewUnavailable()) return;
+
+    const pagesContainer = getPreviewPagesContainer(stage);
+    const pages = [];
+    const previousScale = stage.style.getPropertyValue("--preview-scale");
+    stage.style.setProperty("--preview-scale", "1");
+
+    source.classList.add("preview-source-page");
+    pagesContainer.innerHTML = "";
+    let page = addPreviewPage(pages, pagesContainer);
+
+    Array.from(source.children).forEach(child => {
+        if (child.classList.contains("doc-footer")) {
+            return;
+        }
+
+        if (child.classList.contains("doc-cost")) {
+            page = paginatePreviewCostTable(child, page, pages, pagesContainer);
+            return;
+        }
+
+        const clone = clonePreviewElement(child);
+        if (!appendPreviewContent(page, clone)) {
+            if (isPreviewPageEmpty(page)) {
+                appendPreviewContent(page, clone, { allowOverflow: true });
+            } else {
+                page = addPreviewPage(pages, pagesContainer);
+                appendPreviewContent(page, clone, { allowOverflow: true });
+            }
+        }
+    });
+
+    if (previousScale) {
+        stage.style.setProperty("--preview-scale", previousScale);
+    } else {
+        stage.style.removeProperty("--preview-scale");
+    }
+
+    stage.classList.add("has-preview-pages");
+}
+
+function updatePreviewLayout() {
+    paginatePreviewDocument();
+    updatePreviewScale();
+}
+
 function updatePreviewScale() {
     const panel = document.querySelector(".preview-panel");
     const scroll = document.querySelector(".preview-scroll");
@@ -2333,10 +2557,7 @@ function updatePreviewScale() {
     const doc = document.getElementById("previewDocument");
     if (!panel || !scroll || !stage || !doc) return;
 
-    const previewUnavailable = document.body.classList.contains("preview-hidden")
-        || (isMobileActionMenuLayout() && !document.body.classList.contains("mobile-preview-mode"));
-
-    if (previewUnavailable) {
+    if (isPreviewUnavailable()) {
         stage.style.removeProperty("--preview-scale");
         stage.style.removeProperty("--preview-table-border-width");
         stage.style.width = "";
@@ -2344,8 +2565,10 @@ function updatePreviewScale() {
         return;
     }
 
-    const baseWidth = doc.offsetWidth || 794;
-    const baseHeight = doc.offsetHeight || 1123;
+    const pagesContainer = document.getElementById("previewPages");
+    const pageCount = Math.max(1, pagesContainer?.querySelectorAll(".preview-page-clone").length || 1);
+    const baseWidth = doc.offsetWidth || PREVIEW_PAGE_WIDTH;
+    const baseHeight = pageCount * PREVIEW_PAGE_HEIGHT + (pageCount - 1) * PREVIEW_PAGE_GAP;
     const availableWidth = Math.max(scroll.clientWidth - 8, 0);
     const scale = availableWidth > 0 ? Math.min(1, availableWidth / baseWidth) : 1;
     const mobilePreview = isMobileActionMenuLayout();
@@ -2429,7 +2652,7 @@ function renderPreview() {
     syncRealisasiSummaryValues();
 
     syncStepState();
-    requestAnimationFrame(updatePreviewScale);
+    requestAnimationFrame(updatePreviewLayout);
 }
 
 function syncStepState() {
@@ -2535,7 +2758,7 @@ function setMobilePreviewMode(open) {
 
     window.scrollTo(0, 0);
     updatePreviewToggleButton();
-    requestAnimationFrame(updatePreviewScale);
+    requestAnimationFrame(updatePreviewLayout);
 }
 
 function togglePreviewVisibility() {
@@ -2547,7 +2770,7 @@ function togglePreviewVisibility() {
     document.body.classList.toggle("preview-hidden");
     document.body.classList.remove("mobile-preview-mode");
     updatePreviewToggleButton();
-    requestAnimationFrame(updatePreviewScale);
+    requestAnimationFrame(updatePreviewLayout);
 }
 
 function updatePreviewToggleButton() {
@@ -2833,8 +3056,15 @@ function addVectorPdfPage(pdf, cursor) {
     cursor.y = VECTOR_PDF.marginTop;
 }
 
+function getVectorPdfContentBottom() {
+    return VECTOR_PDF.pageHeight
+        - VECTOR_PDF.footerBottomOffset
+        - pdfFontHeight(7.5)
+        - pxToPdfMm(14);
+}
+
 function ensureVectorPdfSpace(pdf, cursor, neededHeight) {
-    if (cursor.y + neededHeight <= VECTOR_PDF.pageHeight - VECTOR_PDF.marginBottom) {
+    if (cursor.y + neededHeight <= getVectorPdfContentBottom()) {
         return false;
     }
 
@@ -3069,7 +3299,7 @@ function drawVectorPdfCostTable(pdf, data, cursor) {
         const descLines = splitPdfText(pdf, row.description || "", columns.desc - bodyPadX * 2);
         const rowHeight = Math.max(minRowHeight, descLines.length * bodyLineHeight + 2.4);
 
-        if (cursor.y + rowHeight > VECTOR_PDF.pageHeight - VECTOR_PDF.marginBottom) {
+        if (cursor.y + rowHeight > getVectorPdfContentBottom()) {
             addVectorPdfPage(pdf, cursor);
             drawVectorPdfCostHeader(pdf, cursor, columns, true);
         }
@@ -3105,7 +3335,7 @@ function drawVectorPdfCostTable(pdf, data, cursor) {
     });
 
     const footerHeight = 6.6;
-    if (cursor.y + footerHeight > VECTOR_PDF.pageHeight - VECTOR_PDF.marginBottom) {
+    if (cursor.y + footerHeight > getVectorPdfContentBottom()) {
         addVectorPdfPage(pdf, cursor);
         drawVectorPdfCostHeader(pdf, cursor, columns, true);
     }
@@ -3303,18 +3533,22 @@ function drawVectorPdfSignatures(pdf, data, signatureImages, cursor) {
     cursor.y += sectionHeight;
 }
 
-function drawVectorPdfFooter(pdf, cursor) {
+function drawVectorPdfFooter(pdf) {
     const footerY = VECTOR_PDF.pageHeight - VECTOR_PDF.footerBottomOffset;
-    const footerHeight = pdfFontHeight(7.5);
-    if (cursor.y + footerHeight > footerY) {
-        addVectorPdfPage(pdf, cursor);
-    }
-
     setPdfFont(pdf, 7.5, "normal", 119);
     pdf.text("Travel Expense by Wahyu", VECTOR_PDF.pageWidth / 2, footerY, {
         align: "center",
         baseline: "top"
     });
+}
+
+function drawVectorPdfFooters(pdf) {
+    const pageCount = pdf.getNumberOfPages();
+    for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+        pdf.setPage(pageNumber);
+        drawVectorPdfFooter(pdf);
+    }
+    pdf.setPage(pageCount);
 }
 
 async function buildVectorPdfDocument(options = {}) {
@@ -3339,7 +3573,7 @@ async function buildVectorPdfDocument(options = {}) {
     drawVectorPdfNote(pdf, data, cursor);
     drawVectorPdfSummary(pdf, data, cursor);
     drawVectorPdfSignatures(pdf, data, signatureImages, cursor);
-    drawVectorPdfFooter(pdf, cursor);
+    drawVectorPdfFooters(pdf);
 
     if (autoPrint) {
         pdf.autoPrint();
@@ -3456,7 +3690,7 @@ function init() {
         updateMobileSections();
         updateThemeToggleButton();
         updatePreviewToggleButton();
-        updatePreviewScale();
+        updatePreviewLayout();
     });
 }
 

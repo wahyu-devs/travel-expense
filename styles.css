@@ -917,13 +917,47 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     flex: 0 0 auto;
 }
 
-.preview-stage .doc-page {
+.preview-pages {
+    width: 794px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transform-origin: top left;
+    transform: scale(var(--preview-scale, 1));
+}
+
+.preview-source-page {
     position: absolute;
     top: 0;
     left: 0;
     margin: 0;
-    transform-origin: top left;
-    transform: scale(var(--preview-scale, 1));
+    transform: none;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: -1;
+    box-shadow: none;
+}
+
+.preview-source-page .doc-footer {
+    display: none;
+}
+
+.preview-page-clone {
+    position: relative;
+    height: 1123px;
+    min-height: 1123px;
+    margin: 0;
+    overflow: hidden;
+    flex: 0 0 1123px;
+}
+
+.preview-page-footer {
+    position: absolute;
+    left: 34px;
+    right: 34px;
+    bottom: 28px;
+    margin-top: 0;
+    padding-top: 0;
 }
 
 .doc-page {
