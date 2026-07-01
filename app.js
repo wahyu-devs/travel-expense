@@ -2585,7 +2585,8 @@ function updatePreviewScale() {
         : PREVIEW_TABLE_BORDER_WIDTH;
     stage.style.setProperty("--preview-table-border-width", `${tableBorderWidth}px`);
     stage.style.width = `${baseWidth * scale}px`;
-    stage.style.height = `${baseHeight * scale}px`;
+    const visualHeight = pagesContainer?.getBoundingClientRect().height;
+    stage.style.height = `${Math.ceil(visualHeight || baseHeight * scale)}px`;
 }
 
 function renderPreview() {

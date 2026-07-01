@@ -918,6 +918,9 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
 }
 
 .preview-pages {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 794px;
     display: flex;
     flex-direction: column;
@@ -926,19 +929,11 @@ html[data-theme="light"] input[type="date"].form-control::-webkit-calendar-picke
     transform: scale(var(--preview-scale, 1));
 }
 
-.preview-source-page {
-    position: absolute;
-    top: 0;
-    left: 0;
-    margin: 0;
-    transform: none;
-    visibility: hidden;
-    pointer-events: none;
-    z-index: -1;
-    box-shadow: none;
+#previewDocument.preview-source-page {
+    display: none;
 }
 
-.preview-source-page .doc-footer {
+#previewDocument.preview-source-page .doc-footer {
     display: none;
 }
 
