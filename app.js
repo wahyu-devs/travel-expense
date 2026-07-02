@@ -2,6 +2,9 @@ const STORAGE_KEY = "travel_form_bootstrap_current_v5";
 const DRAFTS_STORAGE_KEY = "travel_form_project_drafts_v1";
 const THEME_KEY = "travel_form_bootstrap_theme_v2";
 const DEFAULT_COMPANY_LOGO = "./assets/img/company-logo.png";
+const LOADING_SCREEN_MIN_MS = 650;
+const LOADING_SCREEN_EXIT_MS = 260;
+const loadingScreenStartedAt = performance.now();
 const LEGACY_STORAGE_KEYS = [
     "travel_form_bootstrap_v2",
     "travel_form_bootstrap_v3",
@@ -1430,6 +1433,54 @@ function initTheme() {
         savedTheme = null;
     }
     applyTheme(savedTheme === "light" ? "light" : "dark");
+}
+
+function updateLoadingScreenProgress(value, statusText) {
+    const safeValue = Math.max(0, Math.min(100, Number(value) || 0));
+    const fill = document.getElementById("appLoaderProgressFill");
+    const percent = document.getElementById("appLoaderPercent");
+    const status = document.getElementById("appLoaderStatus");
+    const progress = document.querySelector(".app-loader-progress");
+
+    if (fill) {
+        fill.style.width = `${safeValue}%`;
+    }
+
+    if (percent) {
+        percent.textContent = `${Math.round(safeValue)}%`;
+    }
+
+    if (status && statusText) {
+        status.textContent = statusText;
+    }
+
+    if (progress) {
+        progress.setAttribute("aria-valuenow", String(Math.round(safeValue)));
+    }
+}
+
+function completeLoadingScreen() {
+    const loader = document.getElementById("appLoader");
+    const elapsed = performance.now() - loadingScreenStartedAt;
+    const delay = Math.max(0, LOADING_SCREEN_MIN_MS - elapsed);
+
+    if (!loader) {
+        document.body.classList.remove("app-loading");
+        return;
+    }
+
+    window.setTimeout(() => {
+        updateLoadingScreenProgress(100, "Ready to use");
+
+        window.setTimeout(() => {
+            document.body.classList.remove("app-loading");
+            loader.classList.add("is-hidden");
+
+            window.setTimeout(() => {
+                loader.hidden = true;
+            }, LOADING_SCREEN_EXIT_MS);
+        }, 180);
+    }, delay);
 }
 
 function fillStaticFields() {
@@ -3681,11 +3732,15 @@ function escapeAttr(str) {
 }
 
 function init() {
+    updateLoadingScreenProgress(45, "Loading preferences");
     initTheme();
     clearLegacyState();
+    updateLoadingScreenProgress(60, "Loading data");
     loadState();
     bindStaticFields();
+    updateLoadingScreenProgress(76, "Preparing form");
     renderCurrentState();
+    updateLoadingScreenProgress(88, "Preparing preview");
     bindCompanyLogoInputs();
     bindSignatureInputs();
     bindTabsAndSteps();
@@ -3701,6 +3756,7 @@ function init() {
     setMobileActionMenuOpen(false);
     updatePreviewToggleButton();
     maybeOpenWhatsNewModal();
+    updateLoadingScreenProgress(96, "Finalizing interface");
     window.addEventListener("resize", () => {
         if (!isMobileActionMenuLayout()) {
             setMobileActionMenuOpen(false);
@@ -3713,6 +3769,7 @@ function init() {
         updatePreviewToggleButton();
         updatePreviewLayout();
     });
+    completeLoadingScreen();
 }
 
 document.addEventListener("DOMContentLoaded", init);
