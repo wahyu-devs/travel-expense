@@ -199,11 +199,11 @@ body.app-loading .app-shell {
 
 .app-loader-progress span {
     display: block;
-    width: 35%;
+    width: 0%;
     height: 100%;
     border-radius: inherit;
     background: var(--accent);
-    transition: width .32s ease;
+    transition: width .12s linear;
 }
 
 html[data-theme="light"] .app-loader-progress span {

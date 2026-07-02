@@ -2,9 +2,18 @@ const STORAGE_KEY = "travel_form_bootstrap_current_v5";
 const DRAFTS_STORAGE_KEY = "travel_form_project_drafts_v1";
 const THEME_KEY = "travel_form_bootstrap_theme_v2";
 const DEFAULT_COMPANY_LOGO = "./assets/img/company-logo.png";
-const LOADING_SCREEN_MIN_MS = 650;
+const LOADING_SCREEN_MIN_MS = 1000;
 const LOADING_SCREEN_EXIT_MS = 260;
 const loadingScreenStartedAt = performance.now();
+const LOADING_SCREEN_STATUS_STEPS = [
+    { progress: 0, text: "Loading application" },
+    { progress: 18, text: "Loading preferences" },
+    { progress: 38, text: "Loading data" },
+    { progress: 58, text: "Preparing form" },
+    { progress: 76, text: "Preparing preview" },
+    { progress: 92, text: "Finalizing interface" },
+    { progress: 100, text: "Ready to use" }
+];
 const LEGACY_STORAGE_KEYS = [
     "travel_form_bootstrap_v2",
     "travel_form_bootstrap_v3",
@@ -81,6 +90,9 @@ const defaultState = {
 };
 
 let state = structuredClone(defaultState);
+let loadingScreenReady = false;
+let loadingScreenFrameId = null;
+let loadingScreenHidden = false;
 const costEditorCollapsed = {
     ump: true,
     realisasi: true
@@ -1459,28 +1471,82 @@ function updateLoadingScreenProgress(value, statusText) {
     }
 }
 
-function completeLoadingScreen() {
+function getLoadingScreenStatusText(progress) {
+    let statusText = LOADING_SCREEN_STATUS_STEPS[0].text;
+
+    LOADING_SCREEN_STATUS_STEPS.forEach(step => {
+        if (progress >= step.progress) {
+            statusText = step.text;
+        }
+    });
+
+    return statusText;
+}
+
+function hideLoadingScreen() {
     const loader = document.getElementById("appLoader");
-    const elapsed = performance.now() - loadingScreenStartedAt;
-    const delay = Math.max(0, LOADING_SCREEN_MIN_MS - elapsed);
+
+    if (loadingScreenHidden) {
+        return;
+    }
+
+    loadingScreenHidden = true;
+
+    if (loadingScreenFrameId !== null) {
+        window.cancelAnimationFrame(loadingScreenFrameId);
+        loadingScreenFrameId = null;
+    }
 
     if (!loader) {
         document.body.classList.remove("app-loading");
         return;
     }
 
+    updateLoadingScreenProgress(100, "Ready to use");
+
     window.setTimeout(() => {
-        updateLoadingScreenProgress(100, "Ready to use");
+        document.body.classList.remove("app-loading");
+        loader.classList.add("is-hidden");
 
         window.setTimeout(() => {
-            document.body.classList.remove("app-loading");
-            loader.classList.add("is-hidden");
+            loader.hidden = true;
+        }, LOADING_SCREEN_EXIT_MS);
+    }, 180);
+}
 
-            window.setTimeout(() => {
-                loader.hidden = true;
-            }, LOADING_SCREEN_EXIT_MS);
-        }, 180);
-    }, delay);
+function startLoadingScreenProgress() {
+    const loader = document.getElementById("appLoader");
+
+    if (!loader) {
+        document.body.classList.remove("app-loading");
+        return;
+    }
+
+    if (loadingScreenFrameId !== null || loadingScreenHidden) {
+        return;
+    }
+
+    const tick = () => {
+        const elapsed = performance.now() - loadingScreenStartedAt;
+        const durationProgress = Math.min(100, (elapsed / LOADING_SCREEN_MIN_MS) * 100);
+        const displayProgress = loadingScreenReady ? durationProgress : Math.min(durationProgress, 96);
+
+        updateLoadingScreenProgress(displayProgress, getLoadingScreenStatusText(displayProgress));
+
+        if (loadingScreenReady && durationProgress >= 100) {
+            hideLoadingScreen();
+            return;
+        }
+
+        loadingScreenFrameId = window.requestAnimationFrame(tick);
+    };
+
+    loadingScreenFrameId = window.requestAnimationFrame(tick);
+}
+
+function completeLoadingScreen() {
+    loadingScreenReady = true;
+    startLoadingScreenProgress();
 }
 
 function fillStaticFields() {
@@ -3732,15 +3798,12 @@ function escapeAttr(str) {
 }
 
 function init() {
-    updateLoadingScreenProgress(45, "Loading preferences");
+    startLoadingScreenProgress();
     initTheme();
     clearLegacyState();
-    updateLoadingScreenProgress(60, "Loading data");
     loadState();
     bindStaticFields();
-    updateLoadingScreenProgress(76, "Preparing form");
     renderCurrentState();
-    updateLoadingScreenProgress(88, "Preparing preview");
     bindCompanyLogoInputs();
     bindSignatureInputs();
     bindTabsAndSteps();
@@ -3756,7 +3819,6 @@ function init() {
     setMobileActionMenuOpen(false);
     updatePreviewToggleButton();
     maybeOpenWhatsNewModal();
-    updateLoadingScreenProgress(96, "Finalizing interface");
     window.addEventListener("resize", () => {
         if (!isMobileActionMenuLayout()) {
             setMobileActionMenuOpen(false);
