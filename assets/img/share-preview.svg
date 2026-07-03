@@ -36,26 +36,26 @@
   <path d="M0 104 C214 58 442 94 620 132 C832 178 1036 162 1200 108 V0 H0 Z" fill="#ffffff" opacity="0.018"/>
   <path d="M0 528 C226 580 418 546 620 504 C830 460 1014 470 1200 522 V630 H0 Z" fill="#000000" opacity="0.14"/>
 
-  <g transform="translate(150 118)" filter="url(#modalShadow)">
-    <rect width="900" height="370" rx="20" fill="#11141a" stroke="url(#cardStroke)" stroke-width="2"/>
-    <path d="M22 1 H878 Q899 1 899 22" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.08"/>
-    <path d="M1 22 Q1 1 22 1 H878" fill="none" stroke="#7ca7e8" stroke-width="1" opacity="0.08"/>
+  <g transform="translate(84 86)" filter="url(#modalShadow)">
+    <rect width="1032" height="458" rx="22" fill="#11141a" stroke="url(#cardStroke)" stroke-width="2"/>
+    <path d="M22 1 H1010 Q1031 1 1031 22" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.08"/>
+    <path d="M1 22 Q1 1 22 1 H1010" fill="none" stroke="#7ca7e8" stroke-width="1" opacity="0.08"/>
 
-    <g transform="translate(54 84)">
-      <rect width="88" height="88" rx="8" fill="url(#iconFill)" stroke="#3f74ba" stroke-width="2"/>
-      <path d="M9 2 H79 Q86 2 86 9" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.16"/>
-      <g transform="translate(44 44) rotate(45) scale(2.39) translate(-8 -8)">
+    <g transform="translate(70 98)">
+      <rect width="104" height="104" rx="10" fill="url(#iconFill)" stroke="#3f74ba" stroke-width="2"/>
+      <path d="M10 2 H94 Q102 2 102 10" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.16"/>
+      <g transform="translate(52 52) rotate(45) scale(2.82) translate(-8 -8)">
         <path fill="#f3f4f6" d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493L10 11.59V14a.5.5 0 0 1-.224.416l-1.5 1a.5.5 0 0 1-.552 0l-1.5-1A.5.5 0 0 1 6 14v-2.41l-5.418.903A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849"/>
       </g>
 
-      <g transform="translate(112 3)">
-        <text x="0" y="41" fill="#f3f4f6" font-family="Inter, Arial, sans-serif" font-size="60" font-weight="800">Travel Expense</text>
-        <text x="0" y="78" fill="#a6b0bf" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Travel Advance and Expense Report</text>
+      <g transform="translate(132 2)">
+        <text x="0" y="47" fill="#f3f4f6" font-family="Inter, Arial, sans-serif" font-size="68" font-weight="800">Travel Expense</text>
+        <text x="0" y="88" fill="#a6b0bf" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="600">Travel Advance and Expense Report</text>
       </g>
     </g>
 
-    <line x1="54" y1="222" x2="846" y2="222" stroke="#2a3240" stroke-width="2"/>
+    <line x1="70" y1="264" x2="962" y2="264" stroke="#2a3240" stroke-width="2"/>
 
-    <text x="54" y="272" fill="#c7d0dd" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="600">Create and export travel expense reports in your browser.</text>
+    <text x="70" y="346" fill="#c7d0dd" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="600">Create and export travel expense reports in your browser.</text>
   </g>
 </svg>
