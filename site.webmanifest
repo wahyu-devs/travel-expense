@@ -4,7 +4,7 @@
   "description": "Create and export travel expense reports in your browser.",
   "start_url": "./",
   "scope": "./",
-  "display": "standalone",
+  "display": "minimal-ui",
   "background_color": "#0d0f13",
   "theme_color": "#0d0f13",
   "icons": [
