@@ -1029,6 +1029,47 @@ function saveDraftToCollection() {
     };
 }
 
+function getSavedStateSignature(targetState = state) {
+    return JSON.stringify(normalizeStoredStateTextSnapshot(targetState));
+}
+
+function isCurrentStateSavedToCollection() {
+    const result = readDraftEntries();
+    if (!result.ok) {
+        return {
+            ok: false,
+            saved: false,
+            message: result.message
+        };
+    }
+
+    const currentSignature = getSavedStateSignature(state);
+    const saved = result.drafts.some(draft => (
+        getSavedStateSignature(draft.state) === currentSignature
+    ));
+
+    return { ok: true, saved };
+}
+
+function ensureCurrentStateSavedForOutput(actionLabel) {
+    const result = isCurrentStateSavedToCollection();
+    if (!result.ok) {
+        showToast(result.message || "Data tersimpan tidak bisa dicek. Simpan dokumen terlebih dahulu.", {
+            type: "error",
+            duration: 4600
+        });
+        return false;
+    }
+
+    if (result.saved) return true;
+
+    showToast(`Simpan dokumen terlebih dahulu sebelum ${actionLabel}.`, {
+        type: "warning",
+        duration: 4600
+    });
+    return false;
+}
+
 function loadDraftFromCollection(id) {
     const result = readDraftEntries();
     if (!result.ok) return result;
@@ -3735,6 +3776,8 @@ async function buildPdfDocument(options = {}) {
 }
 
 async function downloadPdf(button = document.getElementById("downloadPdfBtn")) {
+    if (!ensureCurrentStateSavedForOutput("download PDF")) return;
+
     const restoreButton = setButtonLoading(button, "Membuat PDF...");
 
     try {
@@ -3752,6 +3795,8 @@ async function downloadPdf(button = document.getElementById("downloadPdfBtn")) {
 }
 
 async function printPdf(button = document.getElementById("printPdfBtn")) {
+    if (!ensureCurrentStateSavedForOutput("mencetak PDF")) return;
+
     const restoreButton = setButtonLoading(button, "Menyiapkan Print...");
     const printWindow = window.open("", "_blank");
 
