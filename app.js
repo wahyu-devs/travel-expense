@@ -2900,16 +2900,16 @@ function bindTopActions() {
 
     document.getElementById("resetBtn").addEventListener("click", async () => {
         const ok = await showConfirmDialog({
-            title: "Kosongkan Form?",
-            message: "Semua data yang sedang diisi akan dikembalikan ke nilai awal.",
-            confirmLabel: "Reset",
+            title: "Buat Dokumen Baru?",
+            message: "Data yang belum disimpan akan dikosongkan. Simpan terlebih dahulu jika diperlukan.",
+            confirmLabel: "Buat Baru",
             tone: "danger"
         });
         if (!ok) return;
         state = createResetState();
         saveState();
         renderCurrentState();
-        showToast("Form berhasil dikosongkan.", { type: "success" });
+        showToast("Dokumen baru siap diisi.", { type: "success" });
     });
 
     document.getElementById("themeToggleBtn").addEventListener("click", () => {
@@ -3063,16 +3063,16 @@ function bindMobileAppActions() {
 
     resetButton?.addEventListener("click", async () => {
         const ok = await showConfirmDialog({
-            title: "Kosongkan Form?",
-            message: "Semua data yang sedang diisi akan dikembalikan ke nilai awal.",
-            confirmLabel: "Reset",
+            title: "Buat Dokumen Baru?",
+            message: "Data yang belum disimpan akan dikosongkan. Simpan terlebih dahulu jika diperlukan.",
+            confirmLabel: "Buat Baru",
             tone: "danger"
         });
         if (!ok) return;
         state = createResetState();
         saveState();
         renderCurrentState();
-        showToast("Form berhasil dikosongkan.", { type: "success" });
+        showToast("Dokumen baru siap diisi.", { type: "success" });
     });
 
     printButton?.addEventListener("click", () => printPdf(printButton));
